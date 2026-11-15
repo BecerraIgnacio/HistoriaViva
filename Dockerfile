@@ -14,11 +14,12 @@ ARG IMAGEN_PYTHON=python:3.12.16-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093
 FROM ${IMAGEN_PYTHON}
 
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-spa ffmpeg util-linux \
        tzdata libreoffice-writer-nogui libreoffice-calc-nogui \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir "uv==0.11.33"
+RUN pip install --no-cache-dir "uv==0.13.4"
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \

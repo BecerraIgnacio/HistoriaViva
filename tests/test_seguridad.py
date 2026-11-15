@@ -229,7 +229,7 @@ def test_seg_corpus_real_fuera_del_repositorio():
     real quedan fuera de git (DEC-97, DEC-120). `gitleaks` corre aparte, en CI."""
     import subprocess
 
-    raiz = MVP.parent
+    raiz = MVP
 
     def git(*argumentos: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
@@ -237,8 +237,8 @@ def test_seg_corpus_real_fuera_del_repositorio():
         )
 
     ignoradas = [
-        "mvp/referencia/piezas.csv", "referencia/originales/acta.pdf",
-        "mvp/referencia/corridas/m2.json", "corpus-semilla/foto.jpg",
+        "referencia/piezas.csv", "referencia/originales/acta.pdf",
+        "referencia/corridas/m2.json", "corpus-semilla/foto.jpg",
     ]
     assert git("check-ignore", *ignoradas).stdout.split() == ignoradas
     rastreados = git("ls-files").stdout.splitlines()

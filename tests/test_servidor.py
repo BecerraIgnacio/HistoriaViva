@@ -61,7 +61,7 @@ pytestmark = pytest.mark.historia(241)
 MVP = Path(__file__).resolve().parent.parent
 SERVIDOR = MVP / "compose.servidor.yml"
 HUMO = MVP / "compose.humo.yml"
-RECETA = MVP.parent / "docs" / "mvp" / "runbook-r16-receta-de-servidor.md"
+RECETA = MVP / "docs" / "runbook-r16-receta-de-servidor.md"
 GENERADOR = MVP / "generar-env-servidor.sh"
 
 DOMINIO = "historiaviva.fie.undef.edu.ar"

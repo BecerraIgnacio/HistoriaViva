@@ -76,7 +76,7 @@ necesita `ollama-embeddings`, que la PC no ve. Va después de `docker compose`."
 Correr = Callable[[Sequence[str], Path | None], tuple[int, str]]
 """Corre un comando y devuelve su código y su error estándar; con una ruta, la salida va ahí."""
 
-_SIN_VENTANA = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+_SIN_VENTANA = getattr(subprocess, "CREATE_NO_WINDOW", 0)  # solo existe en Windows
 """`docker` y `restic` abren su propia consola aunque la tarea programada corra sin ventana."""
 
 

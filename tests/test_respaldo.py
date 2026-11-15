@@ -12,7 +12,6 @@ import json
 import os
 import shutil
 import subprocess
-import sys
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -439,7 +438,7 @@ def test_docker_y_restic_corren_sin_abrir_ventana(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setattr(subprocess, "run", run)
     correr_con({})(["restic", "snapshots"], None)
 
-    sin_ventana = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+    sin_ventana = getattr(subprocess, "CREATE_NO_WINDOW", 0)  # solo existe en Windows
     assert [p["creationflags"] for p in pedidos] == [sin_ventana]
 
 

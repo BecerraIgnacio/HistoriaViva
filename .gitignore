@@ -15,11 +15,11 @@ __pycache__/
 drive_sa*.json
 
 # Originales subidos
-originales/
+/originales/
 
 # Conjunto de referencia del banco (HV_REFERENCIA), sus corridas y el corpus semilla real
-referencia/
-corpus-semilla/
+/referencia/
+/corpus-semilla/
 
 # Resultados de la suite, cobertura, SBOM y la exportación para pip-audit
 .resultados/

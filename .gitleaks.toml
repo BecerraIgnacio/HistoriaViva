@@ -21,6 +21,7 @@ regexes = [
   '''^hv_b27d40e9_Zr8cV3mN5qTxK1jWyH6pLaD4sGfB9eUoXiCk2Pn7Qtx$''',  # token de ejemplo
   # `.env.example` deja las claves vacías: la regla genérica toma el nombre de la variable siguiente.
   '''^HV_[A-Z_]+=$''',
+  '''^hv_0123abcd_simulado$''',  # token simulado de tests/test_carga.py
 ]
 
 [[allowlists]]
