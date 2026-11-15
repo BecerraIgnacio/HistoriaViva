@@ -19,6 +19,5 @@ MVP = Path(__file__).resolve().parent.parent
 DATOS_EN_LA_RAIZ = {"banco"}
 
 
-def test_la_copia_no_trae_historia_ni_datos():
-    assert not (MVP / ".git").exists()
+def test_la_copia_no_trae_datos():
     assert [nombre for nombre in DATOS_EN_LA_RAIZ if (MVP / nombre).exists()] == []

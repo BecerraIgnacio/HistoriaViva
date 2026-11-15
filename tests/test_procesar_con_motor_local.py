@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import io
 import shutil
+import sys
 from collections.abc import Iterator
 from functools import partial
 from pathlib import Path
@@ -150,7 +151,7 @@ def test_una_foto_real_queda_pendiente_con_descripcion_texto_visible_y_resumen(
     texto visible con Tesseract y resumir los dos juntos (user stories 7 y 8)."""
     motor.texto = "Un cartel sobre fondo blanco."
     foto = Image.new("RGB", (1800, 400), "white")
-    fuente = ImageFont.truetype(r"C:\Windows\Fonts\arial.ttf", 96)
+    fuente = ImageFont.truetype("arial.ttf" if sys.platform == "win32" else "DejaVuSans.ttf", 96)
     ImageDraw.Draw(foto).text((40, 120), "FACULTAD 1975", fill="black", font=fuente)
     buffer = io.BytesIO()
     foto.save(buffer, format="PNG")

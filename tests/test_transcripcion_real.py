@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import io
 import shutil
+import sys
 
 import pymupdf
 import pytest
@@ -38,7 +39,7 @@ pytestmark = [
     ),
 ]
 
-_FUENTE = r"C:\Windows\Fonts\arial.ttf"
+_FUENTE = "arial.ttf" if sys.platform == "win32" else "DejaVuSans.ttf"  # Pillow la busca en el sistema
 _ANCHO_PX, _ALTO_PX = 1800, 400
 """Tamaño de la imagen de prueba, elegido para que al insertarla en una página del mismo
 tamaño en puntos y renderizarla de nuevo a `_local._DPI_ESCANEO` no haya reescalado: un
