@@ -1,0 +1,29 @@
+# Base de desarrollo y de la suite del MVP (historia 56): proyecto, volumen y puerto propios, sin
+# datos del Prototipo ni del compose del MVP. La suite vacía tablas antes de cada test.
+# Solo en 127.0.0.1, y en 55433 porque 55432 es la base del Prototipo.
+#
+#   docker compose -f compose.pruebas.yml up -d
+#   HV_BD_URL_PRUEBAS=postgresql://historia:historia@127.0.0.1:55433/historia_viva uv run pytest
+name: historiaviva-mvp-pruebas
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.7-pg17@sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d
+    security_opt: [no-new-privileges:true]
+    environment:
+      POSTGRES_USER: historia
+      POSTGRES_PASSWORD: historia
+      POSTGRES_DB: historia_viva
+    ports:
+      - "127.0.0.1:55433:5432"
+    volumes:
+      - hvmvp_pgdata_pruebas:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U historia -d historia_viva"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  hvmvp_pgdata_pruebas:
+    name: hvmvp_pgdata_pruebas

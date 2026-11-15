@@ -1,0 +1,17 @@
+capacidad,modelo,origen_chino,parametros
+resumir,qwen2.5:3b-instruct-q4_K_M,true,
+resumir,llama3:8b,false,"{""num_ctx"": 8192, ""max_tokens_entrada"": 6868}"
+resumir,mistral:7b,false,
+describir_imagen,qwen3-vl:2b-instruct,true,
+describir_imagen,gemma3:4b,false,
+describir_imagen,qwen2.5vl:3b,true,
+describir_imagen,granite3.2-vision:2b,false,
+describir_imagen,moondream,false,
+embeber,bge-m3,true,
+embeber,snowflake-arctic-embed2,false,"{""dimension"": 1024, ""prefijo_consulta"": ""query: ""}"
+embeber,granite-embedding:278m,false,"{""dimension"": 768}"
+embeber,nomic-embed-text,false,"{""dimension"": 768, ""prefijo_fragmento"": ""search_document: "", ""prefijo_consulta"": ""search_query: ""}"
+embeber,mxbai-embed-large,false,"{""dimension"": 1024, ""prefijo_consulta"": ""Represent this sentence for searching relevant passages: ""}"
+responder,qwen2.5:3b-instruct-q4_K_M,true,
+responder,llama3:8b,false,"{""num_ctx"": 8192, ""max_tokens_entrada"": 6568}"
+responder,mistral:7b,false,

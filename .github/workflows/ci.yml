@@ -1,0 +1,196 @@
+# CI del MVP (ticket 164): lint, secretos (RNF-14, historia 222), dependencias y SBOM, la suite con
+# cobertura y, desde 167, el escaneo de las imágenes de contenedor con Trivy (S-INF-18). Todo corre en la raíz, como en la PC del alumno.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.11.7"  # la de la PC del alumno: `uv export --format cyclonedx1.5` es de esta línea
+  PYTHON_VERSION: "3.13"
+  UV_LOCKED: "1"  # uv.lock manda: si no coincide con pyproject.toml, falla
+
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync
+      - run: uv run --no-sync ruff check src tests
+      - run: uv run --no-sync mypy src tests
+
+  secretos:
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: "8.30.1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0  # todo el historial, no solo el último commit
+          persist-credentials: false
+      - name: Instalar gitleaks (release oficial, verificada con su checksum)
+        working-directory: ${{ runner.temp }}
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          archivo="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSLO "$base/$archivo"
+          curl -fsSLO "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep " ${archivo}\$" "gitleaks_${GITLEAKS_VERSION}_checksums.txt" | sha256sum -c -
+          tar -xzf "$archivo" gitleaks
+          echo "$PWD" >> "$GITHUB_PATH"
+      - name: Escanear el historial completo
+        working-directory: .
+        run: gitleaks git --config .gitleaks.toml --redact --no-banner --verbose .
+
+  dependencias:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: SBOM CycloneDX de lo que se despliega (sin el grupo dev)
+        run: >-
+          uv export --preview-features sbom-export --format cyclonedx1.5 --no-dev
+          -o sbom.cdx.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cdx.json
+          if-no-files-found: error
+      - name: pip-audit sobre uv.lock (todas las dependencias, dev incluido)
+        run: |
+          uv export --format requirements-txt --all-groups --no-emit-project -o requisitos.txt
+          uvx pip-audit@2.10.1 -r requisitos.txt --disable-pip --progress-spinner off
+
+  # S-INF-18 (167): la imagen de la app falla con un CRITICAL o un HIGH que ya tiene arreglo; las de
+  # terceros fijadas en compose.yml (postgres, ollama, caddy) solo informan: no se arreglan acá, se
+  # sube su digest. Los informes quedan como artefacto.
+  imagenes:
+    runs-on: ubuntu-latest
+    env:
+      TRIVY_VERSION: "v0.76.2"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Construir la imagen de la app (Dockerfile)
+        run: |
+          mkdir -p "$RUNNER_TEMP/trivy"
+          docker build -t historiaviva-mvp-app:ci .
+      - name: Escanear la imagen de la app
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
+        with:
+          image-ref: historiaviva-mvp-app:ci
+          version: ${{ env.TRIVY_VERSION }}
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+          output: ${{ runner.temp }}/trivy/app.txt
+      - name: Informe de la app en el registro
+        if: always()
+        run: cat "$RUNNER_TEMP/trivy/app.txt" || true
+      - name: Escanear las imágenes de terceros del compose (solo informe)
+        if: always()
+        # `trivy` quedó en el PATH por la acción de arriba (setup-trivy), con su misma base.
+        run: |
+          grep -oE 'image: [^ ]+@sha256:[0-9a-f]{64}' compose.yml | cut -d' ' -f2 | sort -u |
+          while read -r imagen; do
+            informe="$RUNNER_TEMP/trivy/$(echo "${imagen%%@*}" | tr '/:' '__').txt"
+            trivy image --cache-dir "$GITHUB_WORKSPACE/.cache/trivy" --scanners vuln \
+              --severity CRITICAL,HIGH --ignore-unfixed --exit-code 0 --no-progress \
+              --format table --output "$informe" "$imagen" ||
+              echo "no se pudo escanear $imagen (descarga o registro)" > "$informe"
+            echo "== $imagen"
+            cat "$informe"
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        if: always()
+        with:
+          name: trivy
+          path: ${{ runner.temp }}/trivy/
+          if-no-files-found: warn
+
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60  # con cobertura la suite tarda unas diez veces más
+    services:
+      postgres:
+        # La misma imagen que compose.pruebas.yml.
+        image: pgvector/pgvector:0.8.7-pg17@sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d
+        env:
+          POSTGRES_USER: historia
+          POSTGRES_PASSWORD: historia
+          POSTGRES_DB: historia_viva
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U historia -d historia_viva"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      HV_BD_URL_PRUEBAS: postgresql://historia:historia@127.0.0.1:5432/historia_viva
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Dependencias de sistema de la suite
+        # Tesseract con español (OCR), ffmpeg/ffprobe (video), LibreOffice (conversión de .doc y .xls)
+        # y el cliente 17 de Postgres (respaldo y restauración: pg_dump no baja de versión).
+        # Chrome (axe-core y pantallas), Docker (`compose config`) y Node (npx, Prism) ya vienen en el
+        # runner. Caddy, restic y Drive real no se instalan: esos tests se saltean solos (ver -ra).
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -q --no-install-recommends \
+            tesseract-ocr tesseract-ocr-spa ffmpeg \
+            libreoffice-writer-nogui libreoffice-calc-nogui \
+            postgresql-client-17
+      - name: Más conexiones en Postgres (un pool por proceso de xdist)
+        run: |
+          psql "$HV_BD_URL_PRUEBAS" -c "ALTER SYSTEM SET max_connections = 400"
+          docker restart "${{ job.services.postgres.id }}"
+          until pg_isready -h 127.0.0.1 -p 5432 -U historia; do sleep 1; done
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync
+      - name: Suite con cobertura
+        run: >-
+          uv run --no-sync pytest -q -p no:cacheprovider -n auto
+          --cov --cov-report=term --cov-report=xml:cobertura.xml --cov-report=html:cobertura-html
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        if: always()
+        with:
+          name: cobertura
+          path: |
+            cobertura.xml
+            cobertura-html/
+          if-no-files-found: warn

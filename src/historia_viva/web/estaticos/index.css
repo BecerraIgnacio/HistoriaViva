@@ -1,0 +1,57 @@
+body { font-family: system-ui, sans-serif; margin: 0; background: #f7f7f5; color: #1f1f1f; }
+main { max-width: 760px; margin: 0 auto; padding: 24px 16px; }
+section { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+h1 { font-size: 1.4rem; margin: 0 0 16px; }
+h2 { font-size: 1.1rem; margin: 0 0 12px; }
+label { font-weight: 600; margin-right: 8px; }
+input[type="email"] { font-size: 1rem; padding: 6px; min-width: 16rem; max-width: 100%; }
+button { font-size: 1rem; padding: 6px 14px; }
+.zona-carga { display: block; border: 2px dashed #999; border-radius: 8px; padding: 32px 16px; text-align: center; cursor: pointer; }
+.zona-carga p { margin: 4px 0; }
+.zona-carga.bloqueada { opacity: .45; cursor: not-allowed; }
+.zona-carga.encima { border-color: #2E6E8E; background: #eef5f8; }
+.aviso { color: #555; font-size: .9rem; }
+#form-lote { display: grid; grid-template-columns: max-content 1fr; gap: 8px 12px; align-items: center; }
+#form-lote input, #form-lote select { font-size: 1rem; padding: 6px; min-width: 0; }
+#form-lote .acciones { grid-column: 1 / -1; }
+#form-lote .error-campo { grid-column: 2; margin: 0; font-size: .9rem; }
+#lote-carreras { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+#lote-carreras label { font-weight: normal; }
+#entrar-con-google { display: inline-block; font-size: 1rem; padding: 8px 16px; border-radius: 6px; background: #1F4B3F; color: #fff; text-decoration: none; }
+#entrar-con-google[hidden] { display: none; }
+#entrar-con-google:hover { background: #163A31; }
+.boton-lote { font-size: .95rem; padding: 6px 14px; border-radius: 6px; border: 0; background: #1F4B3F; color: #fff; cursor: pointer; }
+.boton-secundario { font-size: .9rem; padding: 4px 10px; border-radius: 6px; border: 1px solid #1F4B3F; background: #fff; color: #1F4B3F; cursor: pointer; }
+.error { color: #9b2c2c; }
+.franja { background: #E8EEF2; border: 1px solid #ddd; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: .9rem; }
+.piezas { list-style: none; padding: 0; margin: 0; }
+.piezas li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #eee; }
+.piezas li .nombre { overflow-wrap: anywhere; flex: 1; }
+.piezas li .accion { min-width: 7rem; text-align: right; }
+.piezas .boton { display: inline-block; font-size: .9rem; padding: 6px 14px; border-radius: 6px; background: #1F4B3F; color: #fff; text-decoration: none; }
+.piezas .boton:hover { background: #163A31; }
+.piezas .boton + .boton { margin-left: 6px; }
+.piezas .enlace { font-size: .9rem; }
+.enlace { color: #1F4B3F; }
+#subidas { list-style: none; padding: 0; margin: 8px 0 0; }
+#subidas li { display: grid; grid-template-columns: minmax(0, 1fr) 5rem 8rem; gap: 4px 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; }
+#subidas .nombre { overflow-wrap: anywhere; }
+#subidas .tamano { color: #555; font-size: .9rem; text-align: right; }
+#subidas progress { width: 100%; }
+#subidas .marca { grid-column: 1 / -1; font-size: .9rem; }
+#subidas .marca button { margin-left: 8px; }
+#subidas .cancelar { grid-column: 1 / -1; justify-self: start; }
+.estado-Recibida { color: #8C8C8C; }
+.estado-Pendiente { color: #2E6E8E; }
+.estado-Incompleta { color: #B8863B; }
+.estado-Validada { color: #1F7A4D; }
+.cabecera-piezas { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+#filtro-piezas { border: 0; padding: 0; margin: 0; }
+#filtro-piezas label { font-weight: normal; }
+#filtro-piezas[hidden] { display: none; }
+#grupos h3 { font-size: 1rem; margin: 16px 0 4px; }
+.piezas li .marca { flex: 0 1 auto; }
+.solo-lectores { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* En el celular las filas se apilan (spec P2). */
+@media (max-width: 700px) { .piezas li { flex-direction: column; align-items: flex-start; gap: 4px; } .piezas li .nombre { flex: none; } .piezas li .accion { min-width: 0; text-align: left; } }
+.alerta { font-weight: 600; white-space: nowrap; } /* 109: glifo + palabra, color de texto */

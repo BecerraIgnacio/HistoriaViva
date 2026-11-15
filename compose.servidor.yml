@@ -1,0 +1,71 @@
+# Servidor de la universidad (runbook R16, DEC-119): se suma a `compose.yml`, el mismo de la PC, y
+# no cambia nada más. Caddy publica 80 y 443 con TLS y nada más; `web` entra solo con OIDC; ningún
+# servicio de la app arranca con `HV_ENTORNO` (no hay `dev` ni personas de prueba). Lo que falte
+# del `.env` corta acá, antes de crear un contenedor (`:?`), y lo que pase lo vuelve a mirar
+# `Entorno` al arrancar.
+#
+#   dc() { docker compose --env-file /srv/historia-viva/.env -f compose.yml -f compose.servidor.yml "$@"; }
+#   dc up -d
+#
+# La receta entera, con su verificación por paso: `docs/runbook-r16-receta-de-servidor.md`.
+
+services:
+  web:
+    environment:
+      HV_DESPLIEGUE: servidor
+      # Sin `dev` no hay `/auth/dev`: lo que llega de Caddy no cuenta como hecho en la PC.
+      HV_PROXY: ""
+      HV_AUTH: ${HV_AUTH:?Falta HV_AUTH=oidc en .env}
+      # La URL de la FIE, con https; `HV_ORIGEN` es la misma (CSRF).
+      HV_URL_PUBLICA: ${HV_URL_PUBLICA:?Falta HV_URL_PUBLICA (https://...) en .env}
+      HV_ORIGEN: ${HV_ORIGEN:?Falta HV_ORIGEN en .env (la misma que HV_URL_PUBLICA)}
+      # El cliente «Interno» de IT (C18). La URI de retorno es `<HV_URL_PUBLICA>/auth/callback`.
+      HV_OIDC_CLIENTE_ID: ${HV_OIDC_CLIENTE_ID:?Falta HV_OIDC_CLIENTE_ID en .env}
+      HV_OIDC_SECRETO: ${HV_OIDC_SECRETO:?Falta HV_OIDC_SECRETO en .env}
+      HV_CLAVE_COOKIE_PREVIA: ${HV_CLAVE_COOKIE_PREVIA:?Falta HV_CLAVE_COOKIE_PREVIA en .env}
+      # El banco es de la PC (DEC-132): el servidor no lleva la referencia ni el servicio `banco`.
+      HV_REFERENCIA: !reset null
+    volumes: !override
+      - ${HV_ORIGINALES:?Falta HV_ORIGINALES en .env}:/data/originales
+      # El manual de `/ayuda` (118), del clon, de solo lectura.
+      - ./docs:/app/docs:ro
+
+  banco: !reset null
+
+  migrar:
+    environment:
+      HV_DESPLIEGUE: servidor
+
+  trabajador-procesamiento:
+    environment:
+      HV_DESPLIEGUE: servidor
+
+  trabajador-indexacion:
+    environment:
+      HV_DESPLIEGUE: servidor
+
+  trabajador-efemerides:
+    environment:
+      HV_DESPLIEGUE: servidor
+
+  modelos:
+    environment:
+      HV_DESPLIEGUE: servidor
+
+  # El único que publica, en 80 (redirige a https) y 443. `!override`: los puertos de un override
+  # se suman a los del base, y el `127.0.0.1:80` de la PC chocaría con el 80.
+  caddy:
+    ports: !override
+      - "80:80"
+      - "443:443"
+    command: [caddy, run, --config, /etc/caddy/Caddyfile.servidor, --adapter, caddyfile]
+    environment:
+      # El nombre que da el DNS de la FIE (C50) y el `tls` de Caddy: `internal` en la VM de
+      # prueba, `/certs/certificado.pem /certs/clave.pem` con el certificado de IT, o un correo
+      # para Let's Encrypt si el servidor sale a internet y el nombre es público.
+      HV_DOMINIO: ${HV_DOMINIO:?Falta HV_DOMINIO en .env}
+      HV_TLS: ${HV_TLS:?Falta HV_TLS en .env (internal, los archivos de IT o un correo)}
+    volumes:
+      - ./Caddyfile.servidor:/etc/caddy/Caddyfile.servidor:ro
+      # Los archivos del certificado de IT; vacío si `HV_TLS` es `internal` o un correo.
+      - ${HV_CERTIFICADOS:?Falta HV_CERTIFICADOS en .env}:/certs:ro

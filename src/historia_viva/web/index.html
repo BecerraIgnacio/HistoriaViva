@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Cómo se entra: `google`, `dev` o nada; lo completa el servidor (036). -->
+  <meta name="hv-ingreso" content="">
+  <title>Historia Viva — Carga y validación</title>
+  <link rel="stylesheet" href="/estaticos/index.css">
+</head>
+<body>
+<main>
+  <h1>Historia Viva — Carga y validación</h1>
+
+  <!-- Modo degradado: franja informativa, nunca roja. Nada se rompió (§6). -->
+  <p class="franja" id="franja-degradado" role="alert" hidden>
+    El sistema de lectura automática no está disponible en este momento.
+    <span class="sigue">Podés seguir subiendo y validando piezas a mano.</span>
+    Lo que ya estaba procesado no se pierde.
+  </p>
+
+  <!-- La franja del interruptor (DEC-88): informa, no bloquea. Subir y validar siguen. -->
+  <p class="franja" id="franja-interruptor" role="status" hidden>
+    Procesamiento detenido: las Piezas nuevas quedan encoladas y se procesan al reanudarlo.
+    <span class="sigue">Podés seguir subiendo y validando.</span>
+  </p>
+
+  <!-- Con OIDC se entra con Google; con HV_AUTH=dev, con el email, sin elegir de una lista
+       (DEC-112). -->
+  <section id="ingreso" hidden>
+    <a id="entrar-con-google" href="/auth/google" hidden>Entrar con la cuenta de la FIE</a>
+    <form id="form-ingreso" hidden>
+      <label for="email">Tu email</label>
+      <input type="email" id="email" name="email" autocomplete="email" required>
+      <button type="submit">Entrar</button>
+    </form>
+    <p class="aviso error" id="error-ingreso" role="alert" hidden></p>
+    <p class="aviso"><a class="enlace" href="/ayuda">Ayuda</a>: el manual de Historia Viva.</p>
+  </section>
+
+  <section id="sesion" hidden>
+    Entraste como <strong id="quien"></strong>.
+    <button type="button" id="salir">Salir</button>
+    <a class="enlace" id="enlace-lotes" href="/lotes.html" hidden>Lotes</a>
+    <a class="enlace" href="/conversacion.html">Conversar</a>
+    <a class="enlace" href="/efemerides.html">Efemérides</a>
+    <a class="enlace" href="/informes.html">Informes</a>
+    <a class="enlace" id="enlace-admin" href="/admin.html" hidden>Administración</a>
+    <a class="enlace" href="/ayuda">Ayuda</a>
+  </section>
+
+  <!-- P3, mínimo de 026: crear un Lote y cargar en él. Cada Pieza hereda su Contexto común. -->
+  <section id="seccion-lote" hidden>
+    <h2>Lote</h2>
+    <div id="sin-lote">
+      <!-- 151: arrastrar varios archivos arma el Lote solo; el formulario sigue para quien quiere
+           poner el Contexto antes. -->
+      <p class="aviso">Un archivo entra como Pieza suelta. Si arrastrás varios, se arma un Lote
+        solo y el origen, la Fecha y el propietario se piden después, en el Lote, mientras se
+        leen. Para ponerlos antes, creá el Lote acá: cada Pieza los hereda.</p>
+      <!-- Errores por campo y foco en el primero (082): la validación nativa no dice cuál. -->
+      <form id="form-lote" novalidate>
+        <label for="lote-nombre">Nombre *</label><input id="lote-nombre" required>
+        <p class="error error-campo" id="error-lote-nombre" hidden></p>
+        <label for="lote-origen">Origen *</label><input id="lote-origen" required>
+        <p class="error error-campo" id="error-lote-origen" hidden></p>
+        <label for="lote-precision">Fecha *</label>
+        <select id="lote-precision">
+          <option value="anio">Un año</option>
+          <option value="decada">Una década</option>
+          <option value="mes">Un mes</option>
+          <option value="dia">Un día</option>
+          <option value="rango">Entre dos fechas</option>
+        </select>
+        <label for="lote-desde">Desde *</label><input type="date" id="lote-desde" required>
+        <p class="error error-campo" id="error-lote-desde" hidden></p>
+        <label for="lote-hasta" id="rotulo-hasta" hidden>Hasta *</label>
+        <input type="date" id="lote-hasta" hidden>
+        <p class="error error-campo" id="error-lote-hasta" hidden></p>
+        <label for="lote-evento">Evento</label><input id="lote-evento">
+        <p class="error error-campo" id="error-lote-evento" hidden></p>
+        <label for="lote-lugar">Lugar</label><input id="lote-lugar">
+        <p class="error error-campo" id="error-lote-lugar" hidden></p>
+        <label for="lote-propietario">Propietario</label><input id="lote-propietario">
+        <p class="error error-campo" id="error-lote-propietario" hidden></p>
+        <label id="rotulo-carreras">Carreras</label>
+        <div id="lote-carreras" role="group" aria-labelledby="rotulo-carreras"></div>
+        <p class="error error-campo" id="error-lote-carreras" hidden></p>
+        <div class="acciones"><button type="submit" class="boton-lote">Crear Lote y cargar en él</button></div>
+      </form>
+    </div>
+    <div id="con-lote" hidden>
+      <p>
+        <span id="rotulo-lote">Cargando en el Lote</span> <strong id="lote-activo"></strong>
+        <span class="aviso" id="lote-contexto"></span>
+        <button type="button" class="boton-secundario" id="soltar-lote">Cargar sueltas</button>
+        <a class="enlace" id="ver-lote">Ver el Lote</a>
+      </p>
+      <!-- Estado «Lote existente» (085): el Contexto no se edita y el aviso dice cuántas caben. -->
+      <p class="aviso" id="lote-congelado" hidden>Contexto común congelado: el Lote ya tiene
+        Piezas y cada una lo heredó. Lo que el Lote tenga vacío se completa en el Lote.</p>
+      <p class="aviso" id="lote-cupos" role="status" hidden></p>
+    </div>
+    <p class="aviso error" id="error-lote" role="alert" hidden></p>
+  </section>
+
+  <section id="seccion-carga">
+    <h2>Subir una Pieza nueva</h2>
+    <label class="zona-carga bloqueada" id="zona-carga" for="archivo" aria-disabled="true">
+      <p id="texto-zona">Arrastrá uno o varios archivos acá, o hacé clic para elegirlos</p>
+      <p class="aviso">Fotografías, PDF, Word, planillas (.xlsx, .csv, .tsv), texto (.txt) o video (MP4, MOV, WebM, hasta 2 GB y 3 h)</p>
+    </label>
+    <input type="file" id="archivo" hidden disabled multiple
+           accept="image/jpeg,image/png,image/tiff,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.csv,.tsv,text/csv,text/tab-separated-values,.txt,text/plain,video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm">
+    <!-- Política de admisión (spec §2.7, 117): la misma línea que la guía de una página. -->
+    <p class="aviso" id="politica-admision"><strong>No subas</strong> material disciplinario, datos
+      de salud ni listados con sueldos. Ante la duda, no lo subas y consultá.</p>
+    <p class="aviso" id="aviso-persona">Entrá con tu email antes de subir una Pieza.</p>
+    <p class="aviso error" id="error-carga" role="alert" hidden></p>
+    <!-- P3 paso 2 (083): varios archivos al Lote, de a dos, con su fila cada uno. -->
+    <div id="carga-lote" hidden>
+      <p id="resumen-carga" role="status"></p>
+      <p class="aviso" id="aviso-pausado" hidden>El procesamiento está detenido: las Piezas quedan
+        Recibidas y se procesan cuando se reanude.</p>
+      <button type="button" class="boton-secundario" id="cancelar-falta" hidden>Cancelar lo que falta</button>
+      <button type="button" class="boton-secundario" id="reintentar-fallidos" hidden>Reintentar los que fallaron</button>
+      <ul id="subidas"></ul>
+    </div>
+  </section>
+
+  <!-- P2 Mis Piezas (087): cinco grupos; un Aporte no es de nadie y solo sale con «Todas». -->
+  <section id="seccion-piezas" aria-labelledby="titulo-piezas">
+    <div class="cabecera-piezas">
+      <h2 id="titulo-piezas">Mis Piezas</h2>
+      <fieldset id="filtro-piezas" hidden>
+        <legend class="solo-lectores">Qué Piezas ver</legend>
+        <label><input type="radio" name="filtro" value="mias" checked> Mías</label>
+        <label><input type="radio" name="filtro" value="todas"> Todas</label>
+      </fieldset>
+    </div>
+    <!-- El único anuncio de la lista, nunca uno por fila (spec P2). -->
+    <p class="aviso" id="aviso-lista" role="status" aria-live="polite"></p>
+    <!-- Historia 72 (086): los contadores de cada Lote propio sin validar, con su espera. -->
+    <h3 id="titulo-mis-lotes" hidden>Mis Lotes</h3>
+    <ul class="piezas" id="mis-lotes" aria-labelledby="titulo-mis-lotes" hidden></ul>
+    <p class="aviso" id="lista-cargando" hidden>Cargando tus Piezas…</p>
+    <p class="aviso error" id="lista-error" hidden>No pudimos cargar la lista.
+      <button type="button" class="boton-secundario" id="lista-reintentar">Reintentar</button></p>
+    <p class="aviso" id="lista-vacia" hidden>No tenés Piezas para validar. Podés tomar Pendientes
+      de otras personas con “Todas”, o crear un Lote.</p>
+    <div id="grupos">
+      <h3 id="titulo-para-validar" hidden>Para validar</h3>
+      <ul class="piezas" id="para-validar" aria-labelledby="titulo-para-validar" hidden></ul>
+      <h3 id="titulo-procesando" hidden>Procesando</h3>
+      <ul class="piezas" id="procesando" aria-labelledby="titulo-procesando" hidden></ul>
+      <h3 id="titulo-fallaron" hidden>Fallaron</h3>
+      <ul class="piezas" id="fallaron" aria-labelledby="titulo-fallaron" hidden></ul>
+      <h3 id="titulo-analisis-humano" hidden>Requieren análisis humano</h3>
+      <ul class="piezas" id="analisis-humano" aria-labelledby="titulo-analisis-humano" hidden></ul>
+      <h3 id="titulo-no-indexadas" hidden>Validadas, no indexadas</h3>
+      <ul class="piezas" id="no-indexadas" aria-labelledby="titulo-no-indexadas" hidden></ul>
+    </div>
+  </section>
+
+  <!-- Son tiempos de trabajo por persona: solo con OPERAR_SISTEMA (DEC-93). -->
+  <section id="seccion-mediciones" hidden>
+    <h2>Mediciones de la sesión</h2>
+    <p class="aviso">Cuánto llevó cada Ficha, qué se corrigió y qué faltó, para la documentación del gate.</p>
+    <a class="enlace" id="descargar-mediciones" href="/api/mediciones.csv" download>Descargar mediciones (CSV)</a>
+  </section>
+</main>
+
+<script src="/estaticos/piezas.js"></script>
+<script src="/estaticos/index.js"></script>
+</body>
+</html>

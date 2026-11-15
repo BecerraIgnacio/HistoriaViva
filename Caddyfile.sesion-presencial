@@ -1,0 +1,22 @@
+# Lo carga `compose.sesion-presencial.yml` (R-32): el Caddyfile de siempre más un sitio en el 8000,
+# que el override publica en la IP de la LAN, y que enruta solo `/v1` (la API de Agentes, con
+# token). `/api`, `/auth` y la web dan 404 sin llegar a `web`: `/auth/dev` cree que lo que viene
+# de Caddy es la PC (`HV_PROXY`).
+import /etc/caddy/Caddyfile
+
+http://:8000 {
+	# `path` no distingue mayúsculas: `/V1/x` llegaría a `web` fuera de `/v1`.
+	@v1 path_regexp ^/v1(/|$)
+	handle @v1 {
+		# Spec «Cuerpo»: 45 MB fuera de la subida de video.
+		request_body {
+			max_size 45MB
+		}
+		reverse_proxy web:8000
+	}
+	handle {
+		respond 404
+	}
+	header -Server
+	header -Via
+}

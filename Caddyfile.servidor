@@ -1,0 +1,32 @@
+# Proxy del servidor de la universidad (runbook R16): el mismo sitio que `Caddyfile`, servido con
+# HTTPS en el nombre de la FIE (`HV_DOMINIO`). Caddy redirige el 80 al 443 solo. Las diferencias
+# con la PC son tres: el nombre con TLS (`HV_TLS`), HSTS y un `read_body` que alcanza para subir
+# un video de 2 GiB por la red y no por loopback. Lo demás tiene que quedar igual: lo comparan
+# los `test_seg_*` del servidor.
+{
+	servers {
+		# 60m exige ~0,6 MB/s para un video de 2 GiB; por loopback, en la PC, sobraban 10m.
+		timeouts {
+			read_body 60m
+		}
+	}
+}
+
+{$HV_DOMINIO} {
+	tls {$HV_TLS}
+	# Dos `request_body` que coinciden se componen y gana el menor: los matchers no se pisan.
+	@video path /api/piezas/video
+	@resto not path /api/piezas/video
+	request_body @video {
+		max_size 2050MiB
+	}
+	request_body @resto {
+		max_size 45MB
+	}
+	header -Server
+	header -Via
+	header Strict-Transport-Security max-age=31536000
+	reverse_proxy web:8000 {
+		flush_interval -1
+	}
+}

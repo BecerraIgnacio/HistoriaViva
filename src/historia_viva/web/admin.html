@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Historia Viva — Administración</title>
+  <link rel="stylesheet" href="/estaticos/admin.css">
+</head>
+<body>
+<main>
+  <div class="encabezado">
+    <h1>Historia Viva — Administración</h1>
+    <a class="enlace" href="/">Volver a Mis Piezas</a>
+  </div>
+
+  <!-- La franja del interruptor (DEC-88): informa, no bloquea. Validar sigue. -->
+  <p class="franja" id="franja-interruptor" role="status" hidden>
+    Procesamiento detenido: las Piezas nuevas quedan encoladas y se procesan al reanudarlo.
+    Podés seguir subiendo y validando.
+  </p>
+
+  <!-- Índice incompleto (DEC-146 punto 6): el conteo sale del detalle de `/api/salud`. -->
+  <p class="franja" id="franja-indice" role="status" hidden></p>
+
+  <p class="aviso" id="sin-pestanas" hidden>Tu rol no tiene pestañas de Administración.</p>
+  <nav role="tablist" id="pestanas" aria-label="Secciones de Administración"></nav>
+
+  <!-- P7a Modelos (OPERAR_SISTEMA): las seis capacidades, la edición validada y su historial. El
+       modelo sale del banco de pruebas; la pantalla deja elegir cualquiera. -->
+  <section id="panel-modelos" role="tabpanel" aria-labelledby="pestana-modelos" hidden>
+    <h2>Capa de modelos — un modelo por capacidad</h2>
+    <p class="aviso" id="cargando-modelos" role="status">Cargando la configuración…</p>
+    <div class="error" id="error-modelos" role="alert" hidden>
+      No pudimos leer la configuración.
+      <button type="button" id="reintentar-modelos">Reintentar</button>
+    </div>
+    <p class="franja" id="modelos-sin-motor" role="status" hidden>
+      El motor de modelos no responde: no se puede saber qué modelos están descargados. Podés
+      editar y guardar igual.
+    </p>
+    <div class="tabla" id="tabla-modelos" hidden>
+      <table>
+        <caption>Configuración vigente</caption>
+        <thead><tr><th scope="col">Capacidad</th><th scope="col">Motor</th><th scope="col">Modelo</th><th scope="col">Instrucción</th><th scope="col">Estado</th><th scope="col">Acción</th></tr></thead>
+        <tbody id="modelos"></tbody>
+      </table>
+    </div>
+
+    <form id="editar-modelo" novalidate hidden>
+      <h3 id="titulo-editar-modelo" tabindex="-1"></h3>
+      <div id="campo-modelo">
+        <label for="modelo">Modelo</label>
+        <input type="text" id="modelo" maxlength="200" autocomplete="off" spellcheck="false">
+      </div>
+      <div id="campo-instruccion">
+        <label for="instruccion">Instrucción</label>
+        <select id="instruccion"></select>
+      </div>
+      <div class="parametros" id="parametros"></div>
+      <p class="aviso" id="num-ctx-compartido" hidden></p>
+      <p class="aviso">Los trabajos en curso conservan la configuración anterior: el cambio rige para
+        los trabajos nuevos.</p>
+      <p class="aviso" id="aviso-embeber" hidden>Si cambiás «embeber» hay que reconstruir el índice
+        (comando <code>reindexar</code>).</p>
+      <div class="acciones">
+        <button type="button" id="cancelar-modelo">Cancelar</button>
+        <button type="button" id="verificar-modelo">Verificar</button>
+        <button type="submit" class="principal" id="guardar-modelo">Guardar</button>
+      </div>
+      <div class="error" id="errores-modelo" role="alert" hidden></div>
+      <div id="avisos-modelo" role="status" aria-live="polite"></div>
+
+      <div class="tabla" id="tabla-historial-modelo" hidden>
+        <table>
+          <caption>Historial de cambios</caption>
+          <thead><tr><th scope="col">Cuándo</th><th scope="col">Quién</th><th scope="col">Antes</th><th scope="col">Después</th></tr></thead>
+          <tbody id="historial-modelo"></tbody>
+        </table>
+      </div>
+      <p class="aviso" id="historial-modelo-vacio" hidden>Esta capacidad no tuvo cambios desde la
+        pantalla.</p>
+    </form>
+  </section>
+
+  <!-- P7d Interruptor (OPERAR_SISTEMA): los dos frenos, «Frenar todo» y el historial. -->
+  <section id="panel-interruptor" role="tabpanel" aria-labelledby="pestana-interruptor" hidden>
+    <h2>Interruptor global</h2>
+    <p class="aviso" id="cargando-interruptor" role="status">Cargando el estado del interruptor…</p>
+    <div class="frenos">
+      <div class="freno">
+        <span class="nombre">Procesamiento de Piezas</span>
+        <span class="estado" id="estado-procesamiento"></span>
+        <button type="button" id="cambiar-procesamiento" disabled>Detener</button>
+      </div>
+      <div class="freno">
+        <span class="nombre">API de Agentes</span>
+        <span class="estado" id="estado-api"></span>
+        <button type="button" id="cambiar-api" disabled>Detener</button>
+      </div>
+    </div>
+    <p class="aviso">Frenar el procesamiento también frena la indexación y la generación de
+      efemérides. Siguen funcionando la conversación, la validación y la carga de archivos (se
+      encolan).</p>
+    <label for="motivo">Motivo (obligatorio para detener)</label>
+    <textarea id="motivo" maxlength="500" placeholder="Por ejemplo: corrida del banco de modelos"></textarea>
+    <div class="acciones">
+      <button type="button" class="frenar" id="frenar-todo" disabled>Frenar todo…</button>
+    </div>
+    <p class="error" id="error-interruptor" role="alert" hidden></p>
+
+    <div class="tabla">
+      <table>
+        <caption>Historial de eventos del interruptor</caption>
+        <thead><tr><th>Cuándo</th><th>Freno</th><th>Quedó</th><th>Quién</th><th>Motivo</th></tr></thead>
+        <tbody id="historial"></tbody>
+      </table>
+    </div>
+    <p class="aviso" id="historial-vacio" hidden>Todavía no hubo cambios.</p>
+  </section>
+
+  <!-- P7f Programación de efemérides (OPERAR_SISTEMA): «Generar ahora» de un día o un mes (059).
+       La edición de la programación la suma 060. -->
+  <section id="panel-efemerides" role="tabpanel" aria-labelledby="pestana-efemerides" hidden>
+    <h2>Programación de efemérides</h2>
+    <p class="franja" id="efemerides-frenado" role="status" hidden>
+      El procesamiento está detenido: no se generan efemérides hasta que se reanude.
+    </p>
+    <p class="franja" id="efemerides-sin-modelo" role="status" hidden>
+      Falta el modelo de redacción de efemérides. Configuralo en Modelos.
+    </p>
+    <p class="franja" id="efemerides-sin-planificador" role="status" hidden>
+      El planificador de efemérides no está en marcha: los pedidos esperan hasta que arranque. Un
+      pedido nuevo reemplaza al que quedó sin atender.
+    </p>
+    <p class="aviso" id="cargando-efemerides" role="status">Cargando la programación…</p>
+    <p class="error" id="error-efemerides" role="alert" hidden></p>
+
+    <form id="programacion" novalidate>
+      <h3>Programación</h3>
+      <fieldset>
+        <legend>Generación automática</legend>
+        <label><input type="radio" name="habilitada" value="si"> Activada</label>
+        <label><input type="radio" name="habilitada" value="no"> Desactivada</label>
+      </fieldset>
+      <div class="objetivo">
+        <label for="periodicidad">Periodicidad</label>
+        <select id="periodicidad">
+          <option value="diaria">Diaria</option>
+          <option value="semanal">Semanal</option>
+          <option value="mensual">Mensual</option>
+        </select>
+        <label for="anticipacion">Anticipación (días antes)</label>
+        <input type="number" id="anticipacion" min="0" max="365" inputmode="numeric" aria-describedby="error-anticipacion">
+        <label for="maximo">Máximo por corrida</label>
+        <input type="number" id="maximo" min="1" max="500" inputmode="numeric" aria-describedby="error-maximo">
+      </div>
+      <p class="error" id="error-anticipacion" hidden>La anticipación va de 0 a 365 días.</p>
+      <p class="error" id="error-maximo" hidden>El máximo va de 1 a 500 efemérides por corrida.</p>
+      <p class="aviso" id="proxima-corrida"></p>
+      <div class="acciones">
+        <button type="button" id="cancelar-programacion" disabled>Cancelar</button>
+        <button type="submit" class="principal" id="guardar-programacion" disabled>Guardar</button>
+      </div>
+      <p class="error" id="error-programacion" role="alert" hidden></p>
+      <p class="resultado" id="programacion-guardada" role="status" hidden></p>
+    </form>
+
+    <form id="generar-ahora" novalidate>
+      <h3>Generar ahora</h3>
+      <fieldset>
+        <legend>Qué efemérides</legend>
+        <label><input type="radio" name="tipo-objetivo" value="dia" checked> Efemérides de un día</label>
+        <div class="objetivo">
+          <label for="dia-objetivo">Día</label>
+          <input type="number" id="dia-objetivo" min="1" max="31" inputmode="numeric">
+          <label for="mes-del-dia">Mes</label>
+          <select id="mes-del-dia"></select>
+        </div>
+        <label><input type="radio" name="tipo-objetivo" value="mes"> Efemérides de un mes</label>
+        <div class="objetivo">
+          <label for="mes-objetivo">Mes</label>
+          <select id="mes-objetivo" disabled></select>
+        </div>
+      </fieldset>
+      <p class="aviso">Solo cuentan las Fichas Validadas cuya Fecha tiene día y mes o, para las de
+        un mes, el mes conocido. Lo generado nace Propuesta y espera revisión en Efemérides.</p>
+      <div class="acciones"><button type="submit" class="principal" id="boton-generar" disabled>Generar</button></div>
+      <p class="error" id="error-generar" role="alert" hidden></p>
+      <p class="aviso" id="pedido-pendiente" hidden></p>
+      <p class="resultado" id="resultado-generar" role="status" aria-live="polite" hidden></p>
+    </form>
+    <p class="aviso" id="ultima-corrida" hidden></p>
+  </section>
+
+  <!-- P7b Personas (GESTIONAR_PERSONAS): alta, cambio de rol y baja. El Administrador técnico solo
+       lo otorga un técnico interino: después del primer RGC, por el comando `alta-persona` (R-02). -->
+  <section id="panel-personas" role="tabpanel" aria-labelledby="pestana-personas" hidden>
+    <h2>Personas</h2>
+    <p class="franja" id="franja-interinato" role="status" hidden>
+      Todavía no hay RGC nombrado: el Administrador técnico da de alta a las personas (interino).
+      Cada alta o cambio de rol queda en la auditoría con la marca «interino». Dar de alta al
+      primer RGC termina el interinato.
+    </p>
+    <p class="aviso" id="cargando-personas" role="status">Cargando las personas…</p>
+    <p class="error" id="error-personas" role="alert" hidden></p>
+    <div class="tabla" id="tabla-personas" hidden>
+      <table>
+        <caption>Personas</caption>
+        <thead><tr><th scope="col">Nombre</th><th scope="col">Email</th><th scope="col">Rol</th><th scope="col">Estado</th><th scope="col">Acción</th></tr></thead>
+        <tbody id="personas"></tbody>
+      </table>
+    </div>
+
+    <form id="alta-persona">
+      <h3>Dar de alta</h3>
+      <label for="email-persona">Email</label>
+      <input type="email" id="email-persona" maxlength="254" required autocomplete="off">
+      <label for="nombre-persona">Nombre</label>
+      <input type="text" id="nombre-persona" maxlength="200" required autocomplete="off">
+      <fieldset id="roles-alta"><legend>Rol</legend></fieldset>
+      <p class="aviso" id="que-puede" aria-live="polite"></p>
+      <div class="acciones"><button type="submit" class="principal" id="boton-alta">Dar de alta</button></div>
+      <p class="error" id="error-alta" role="alert" hidden></p>
+    </form>
+  </section>
+
+  <dialog id="confirmar-baja" aria-labelledby="titulo-baja">
+    <h2 id="titulo-baja"></h2>
+    <p>No se borra: lo que firmó se conserva. Sus sesiones abiertas se cierran ya.</p>
+    <form method="dialog" class="acciones">
+      <button type="submit" value="cancelar" id="cancelar-baja" autofocus>Cancelar</button>
+      <button type="submit" value="baja" class="frenar">Dar de baja</button>
+    </form>
+  </dialog>
+
+  <!-- P7e Retiradas (RETIRAR_PIEZAS, DEC-138): las Piezas retiradas con su motivo y «Restaurar». -->
+  <section id="panel-retiradas" role="tabpanel" aria-labelledby="pestana-retiradas" hidden>
+    <h2>Piezas retiradas del Acervo</h2>
+    <p class="franja" id="franja-interinato-retiradas" role="status" hidden>
+      Todavía no hay RGC nombrado: el Administrador técnico retira y restaura Piezas (interino).
+      Cada retiro o restauración queda en la auditoría con la marca «interino».
+    </p>
+    <p class="aviso" id="cargando-retiradas" role="status">Cargando las Piezas retiradas…</p>
+    <div class="error" id="error-retiradas" role="alert" hidden>
+      No pudimos cargar las Piezas retiradas.
+      <button type="button" id="reintentar-retiradas">Reintentar</button>
+    </div>
+    <p id="aviso-restauracion" role="status" hidden></p>
+    <p class="aviso" id="retiradas-vacio" hidden>No hay Piezas retiradas.</p>
+    <div class="tabla" id="tabla-retiradas" hidden>
+      <table>
+        <caption>Piezas retiradas</caption>
+        <thead><tr><th scope="col">Pieza</th><th scope="col">Estado al retirarse</th><th scope="col">Retirada por</th><th scope="col">Cuándo</th><th scope="col">Motivo</th><th scope="col">Acción</th></tr></thead>
+        <tbody id="retiradas"></tbody>
+      </table>
+    </div>
+    <div class="acciones"><button type="button" id="mas-retiradas" hidden>Ver más</button></div>
+    <p class="aviso">Restaurar vuelve a mostrar la Pieza en el Acervo y en la Conversación. Una Pieza
+      que estaba Recibida se procesa de nuevo.</p>
+  </section>
+
+  <dialog id="confirmar-restaurar" aria-labelledby="titulo-restaurar">
+    <h2 id="titulo-restaurar"></h2>
+    <ul>
+      <li>Vuelve a verse y a buscarse.</li>
+      <li>Si estaba Recibida, se encola un procesamiento nuevo.</li>
+    </ul>
+    <form method="dialog">
+      <label for="motivo-restaurar">Motivo (de 5 a 500 caracteres)</label>
+      <textarea id="motivo-restaurar" maxlength="500" placeholder="Por ejemplo: se retiró por error"></textarea>
+      <div class="acciones">
+        <button type="submit" value="cancelar" id="cancelar-restaurar" autofocus>Cancelar</button>
+        <button type="submit" value="restaurar" class="principal" id="boton-restaurar" disabled>Restaurar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- P7c Tokens (OPERAR_SISTEMA): emitir, rotar con solape y revocar. El token se ve una sola vez. -->
+  <section id="panel-tokens" role="tabpanel" aria-labelledby="pestana-tokens" hidden>
+    <h2>Tokens de Agentes externos</h2>
+    <p class="aviso">Emitir un token no enciende la API de Agentes: se enciende a mano en la pestaña
+      Interruptor.</p>
+    <p class="aviso" id="cargando-tokens" role="status">Cargando los tokens…</p>
+    <p class="error" id="error-tokens" role="alert" hidden></p>
+    <p class="aviso" id="tokens-vacio" hidden>Todavía no emitiste ningún token.</p>
+    <div class="tabla" id="tabla-tokens" hidden>
+      <table>
+        <caption>Tokens emitidos</caption>
+        <thead><tr><th>Agente</th><th>Token</th><th>Vence</th><th>Último uso</th><th>Estado</th><th>Acción</th></tr></thead>
+        <tbody id="tokens"></tbody>
+      </table>
+    </div>
+
+    <form id="emitir-token">
+      <h3>Emitir el token de un Agente nuevo</h3>
+      <label for="nombre-agente">Nombre del Agente</label>
+      <input type="text" id="nombre-agente" maxlength="100" required autocomplete="off">
+      <fieldset>
+        <legend>Alcances (al menos uno)</legend>
+        <label><input type="checkbox" name="alcance" value="fragmentos:leer"> Buscar fragmentos (<code>fragmentos:leer</code>)</label>
+        <label><input type="checkbox" name="alcance" value="piezas:leer"> Leer Piezas (<code>piezas:leer</code>)</label>
+        <label><input type="checkbox" name="alcance" value="aportes:escribir"> Enviar aportes (<code>aportes:escribir</code>)</label>
+        <label><input type="checkbox" name="alcance" value="efemerides:leer"> Leer efemérides y relatos (<code>efemerides:leer</code>)</label>
+      </fieldset>
+      <div class="acciones"><button type="submit" class="principal" id="boton-emitir">Emitir token</button></div>
+      <p class="error" id="error-emitir" role="alert" hidden></p>
+    </form>
+  </section>
+
+  <dialog id="token-emitido" aria-labelledby="titulo-token">
+    <h2 id="titulo-token"></h2>
+    <p>Copialo ahora. No vas a poder volver a verlo.</p>
+    <div class="token-campo">
+      <input type="text" id="token-en-claro" readonly aria-label="Token" autocomplete="off" spellcheck="false">
+      <button type="button" id="copiar-token">Copiar</button>
+    </div>
+    <p class="aviso" id="aviso-copia" aria-live="polite"></p>
+    <div class="pie-del-token">
+      <label class="guardado"><input type="checkbox" id="ya-lo-guarde"> Ya lo guardé</label>
+      <button type="button" class="principal" id="cerrar-token" disabled>Cerrar</button>
+    </div>
+  </dialog>
+
+  <dialog id="confirmar-revocar" aria-labelledby="titulo-revocar">
+    <h2 id="titulo-revocar">¿Revocar el token?</h2>
+    <p id="efecto-revocar"></p>
+    <form method="dialog" class="acciones">
+      <button type="submit" value="cancelar" id="cancelar-revocar" autofocus>Cancelar</button>
+      <button type="submit" value="revocar" class="frenar">Revocar</button>
+    </form>
+  </dialog>
+
+  <dialog id="confirmar-rotar" aria-labelledby="titulo-rotar">
+    <h2 id="titulo-rotar">¿Rotar el token?</h2>
+    <p id="efecto-rotar"></p>
+    <form method="dialog">
+      <label for="vencen-anteriores">Los tokens actuales siguen valiendo hasta</label>
+      <input type="datetime-local" id="vencen-anteriores" required>
+      <p class="aviso">Hasta 7 días. Pasada esa fecha, solo vale el token nuevo.</p>
+      <div class="acciones">
+        <button type="submit" value="cancelar" id="cancelar-rotar" formnovalidate autofocus>Cancelar</button>
+        <button type="submit" value="rotar" class="principal">Rotar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="confirmar-frenar-todo" aria-labelledby="titulo-frenar-todo">
+    <h2 id="titulo-frenar-todo">¿Frenar todo?</h2>
+    <p>Se detienen el procesamiento y la API de Agentes. Las Piezas en curso terminan o se abortan
+      por sus topes; no se toman más.</p>
+    <form method="dialog" class="acciones">
+      <button type="submit" value="cancelar" id="cancelar-frenar-todo" autofocus>Cancelar</button>
+      <button type="submit" value="frenar" class="frenar">Frenar todo</button>
+    </form>
+  </dialog>
+</main>
+<script src="/estaticos/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+[project]
+name = "historia-viva-mvp"
+version = "0.1.0"
+description = "MVP de Historia Viva: nace de una copia limpia del Prototipo (historia 209)."
+requires-python = ">=3.12"
+dependencies = [
+    "defusedxml>=0.7.1",
+    "fastapi>=0.115",
+    "httpx>=0.27",
+    "joserfc>=1.2",
+    "llama-index-core>=0.14,<0.15",
+    "llama-index-vector-stores-postgres>=0.9,<0.10",
+    "lxml>=6.1",
+    "openpyxl>=3.1.5",
+    "pillow>=12.3.0",
+    "pillow-heif>=1.8.1",
+    "psycopg-pool>=3.2",
+    "psycopg[binary]>=3.2",
+    "pymupdf>=1.28.2",
+    "pytesseract>=0.3.13",
+    "python-docx>=1.2.0",
+    "python-multipart>=0.0.32",
+    "uvicorn>=0.30",
+    "xlsxwriter>=3.2.9",
+]
+
+[dependency-groups]
+dev = [
+    "jsonschema[format-nongpl]>=4.23",
+    "mypy>=1.11",
+    "pytest>=8",
+    "pytest-cov>=7.1.0",
+    "pytest-xdist>=3.8.0",
+    "pyyaml>=6.0.3",
+    "ruff>=0.17.4",
+    "types-jsonschema>=4.26.0.20261006",
+    "types-openpyxl>=3.1.5.20260827",
+    "types-pyyaml>=6.0.12.20260906",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv]
+# El repositorio vive en OneDrive, que no admite los vínculos permanentes que uv usa por defecto.
+link-mode = "copy"
+
+[tool.uv.build-backend]
+# El paquete conserva el nombre del Prototipo: la copia llega tal cual (historia 209).
+module-name = "historia_viva"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --dist loadgroup -m 'not real'"
+
+[tool.coverage.run]
+# Solo el paquete: los tests y las dependencias no cuentan. `--cov` sin argumento toma esto.
+source_pkgs = ["historia_viva"]
+branch = true
+
+[tool.ruff.lint]
+# Reglas por defecto de ruff, menos las que dan ruido masivo sin valor en este repositorio.
+ignore = [
+    "I001",     # orden de imports: cosmético, y reordenar 105 archivos choca con las ramas en curso
+    "FURB167",  # `re.I` por `re.IGNORECASE`: cosmético
+    "RUF022",   # `__all__` sin ordenar: el orden agrupa por tema a propósito
+    "RUF028",   # `# fmt: skip` mal ubicado: el repositorio no usa `ruff format`
+    "SIM905",   # `"a b c".split()` para listas de palabras: el literal las vuelve una línea de 300 columnas
+    "C408",     # `dict(clave=valor)` en lugar del literal: es el estilo de los parámetros de los tests
+    "RUF100",   # da por sin uso los `noqa: F401` de las fixtures importadas, que sí hacen falta
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Importar una fixture de otro módulo y pedirla como parámetro es el patrón de pytest.
+"tests/**" = ["F811"]
+
+[tool.ruff.lint.flake8-bugbear]
+# Dataclass congelada: como valor por defecto se comparte sin riesgo.
+extend-immutable-calls = ["historia_viva.api_agentes.TopesDeCupo"]
+
+[[tool.mypy.overrides]]
+module = ["defusedxml", "defusedxml.*", "lxml", "lxml.*", "pytesseract", "xlsxwriter"]
+ignore_missing_imports = true

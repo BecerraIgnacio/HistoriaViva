@@ -1,0 +1,47 @@
+[
+  {
+    "archivo": "cartel-cyber-ar-2026.jpg",
+    "hechos_esperados": [
+      "Hackathon Cyber.AR 2026",
+      "I Congreso de Ciberdefensa",
+      "16 - 18 septiembre",
+      "Martes 15",
+      "Inauguración y cóctel de bienvenida",
+      "18:30 - 21:45",
+      "Desarrollo de soluciones",
+      "08:00 - 20:00",
+      "Viernes 18",
+      "Defensa final y premiación",
+      "09:00",
+      "Av. Cabildo 15",
+      "info.cyber.ar@fie.undef.edu.ar",
+      "Facultad Militar Conjunta"
+    ],
+    "invenciones": [
+      "personas vestidas con ropa formal",
+      "entorno de oficina",
+      "sala de conferencias",
+      "fotografía",
+      "Universidad Nacional de Educación a Distancia"
+    ],
+    "transcripcion": "cartel-cyber-ar-2026.txt"
+  },
+  {
+    "archivo": "memoria-guerra-1912-estado-mayor.jpg",
+    "hechos_esperados": [
+      "Estado Mayor del Ejército",
+      "1911",
+      "defensa nacional",
+      "Carta Militar de la República",
+      "Sección Geodesia",
+      "Ministerio de Marina",
+      "Montevideo"
+    ],
+    "invenciones": [
+      "personas",
+      "uniforme",
+      "edificio"
+    ],
+    "transcripcion": "memoria-guerra-1912-estado-mayor.txt"
+  }
+]

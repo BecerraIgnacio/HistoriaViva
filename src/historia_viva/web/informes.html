@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Historia Viva — Informes</title>
+  <link rel="stylesheet" href="/estaticos/informes.css">
+</head>
+<body>
+<header class="encabezado">
+  <h1>Historia Viva — Informes</h1>
+  <span id="persona"></span>
+  <a class="enlace" href="/">Volver a Mis Piezas</a>
+</header>
+<p class="error" id="error-sesion" role="alert" hidden></p>
+
+<main>
+  <!-- P9: lista. El informe no usa modelo: sigue funcionando con el procesamiento frenado. -->
+  <section class="region" id="lista" aria-labelledby="titulo-lista">
+    <div class="titulo-con-accion">
+      <h2 id="titulo-lista" tabindex="-1">Informes de acreditación</h2>
+      <button type="button" class="principal" id="nuevo" hidden>+ Nuevo informe</button>
+    </div>
+
+    <form id="formulario" hidden aria-labelledby="titulo-formulario">
+      <h3 id="titulo-formulario">Nuevo informe</h3>
+      <fieldset>
+        <legend>Período</legend>
+        <label for="desde">Desde</label>
+        <input type="date" id="desde" required>
+        <label for="hasta">Hasta</label>
+        <input type="date" id="hasta" required>
+      </fieldset>
+      <fieldset id="carreras">
+        <legend>Carreras (opcional; sin marcar, todas)</legend>
+      </fieldset>
+      <p class="error" id="error-generar" role="alert" hidden></p>
+      <div class="acciones">
+        <button type="submit" class="principal" id="generar">Generar</button>
+        <button type="button" id="cancelar">Cancelar</button>
+      </div>
+    </form>
+
+    <p class="aviso" id="estado-lista" role="status"></p>
+    <table id="tabla" hidden>
+      <thead>
+        <tr><th scope="col">Período</th><th scope="col">Carreras</th><th scope="col">Estado</th>
+          <th scope="col">Integridad</th><th scope="col">Aprobaciones</th>
+          <th scope="col">Acción</th></tr>
+      </thead>
+      <tbody id="informes"></tbody>
+    </table>
+  </section>
+
+  <!-- P9: detalle, con el contenido congelado y los faltantes de hoy. -->
+  <section class="region" id="detalle" aria-labelledby="titulo-detalle" hidden>
+    <button type="button" id="volver">&lt; Informes</button>
+    <h2 id="titulo-detalle" tabindex="-1"></h2>
+    <p id="estado-informe"></p>
+    <p id="reemplazado" hidden>Se generó de nuevo: este Borrador ya no se aprueba.
+      <button type="button" id="ver-nuevo">Ver el informe nuevo</button></p>
+    <!-- R-22: un Aprobado o Exportado conserva lo congelado y avisa, en ocre, qué cambió. -->
+    <p class="aviso-ocre" id="aviso-cambios" hidden></p>
+    <div class="acciones" id="acciones-borrador" hidden>
+      <button type="button" id="generar-de-nuevo">Generar de nuevo</button>
+      <button type="button" id="descartar">Descartar</button>
+    </div>
+    <p class="error" id="error-borrador" role="alert" hidden></p>
+    <p id="integridad"></p>
+    <p class="aviso-ocre" id="aviso-integridad" hidden></p>
+    <p class="aviso">Armado a partir de las Fichas validadas. Ningún modelo escribió este informe.</p>
+    <h3 id="titulo-aprobaciones" tabindex="-1">Aprobaciones</h3>
+    <ul id="aprobaciones"></ul>
+    <button type="button" class="principal" id="aprobar" hidden>Aprobar</button>
+    <!-- 070: exportan GENERAR_INFORME y APROBAR_INFORME; en un Borrador el botón se ve apagado. -->
+    <div class="acciones" id="acciones-exportar" hidden>
+      <button type="button" id="exportar-docx" data-formato="docx"
+        aria-describedby="exportar-apagado">Exportar .docx</button>
+      <button type="button" id="exportar-xlsx" data-formato="xlsx"
+        aria-describedby="exportar-apagado">Exportar .xlsx</button>
+    </div>
+    <p class="aviso" id="exportar-apagado" hidden>Exportar se habilita cuando el informe tiene las
+      dos aprobaciones: la del RGC y la del Coordinador de Extensión.</p>
+    <p class="error" id="error-exportar" role="alert" hidden></p>
+    <p class="aviso" id="estado-detalle" role="status"></p>
+    <p class="error" id="error-detalle" role="alert" hidden>No pudimos cargar el informe.
+      <button type="button" id="reintentar">Reintentar</button></p>
+    <div id="grupos"></div>
+    <h3 id="titulo-faltantes"></h3>
+    <ul id="faltantes"></ul>
+  </section>
+
+  <!-- M4: aprobar es una firma; el foco arranca en «Cancelar» y `Escape` cierra sin aprobar. -->
+  <dialog id="m4" aria-labelledby="titulo-m4" aria-describedby="m4-rol m4-puntos">
+    <h2 id="titulo-m4"></h2>
+    <p id="m4-rol"></p>
+    <ul id="m4-puntos">
+      <li id="m4-piezas"></li>
+      <li id="m4-faltantes"></li>
+      <li id="m4-falta"></li>
+      <li>No se puede deshacer desde la pantalla.</li>
+    </ul>
+    <p class="aviso-ocre" id="m4-aviso" hidden>Aviso: la integridad no llega a 95 %. Podés aprobar
+      igual, pero revisá los faltantes.</p>
+    <p class="error" id="m4-error" role="alert" hidden><span id="m4-error-texto"></span>
+      <button type="button" id="m4-actualizar" hidden>Actualizar</button></p>
+    <div class="acciones">
+      <button type="button" id="m4-cancelar" autofocus>Cancelar</button>
+      <button type="button" class="principal" id="m4-aprobar">Aprobar el informe</button>
+    </div>
+  </dialog>
+</main>
+<script src="/estaticos/informes.js"></script>
+</body>
+</html>

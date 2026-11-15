@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Historia Viva — Guía de una página</title>
+<!-- Guía para la SEU (spec §2.8, ticket 117). Se imprime en una A4 o se guarda como PDF desde el
+     navegador. Los textos entre comillas son los de la pantalla: si cambian, se cambian acá. -->
+<style>
+  @page { size: A4; margin: 12mm 14mm; }
+  :root { --tinta: #1a1a1a; --suave: #555; --linea: #bbb; --fondo: #f3f3f3; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--tinta); background: #fff;
+         font: 10pt/1.35 system-ui, "Segoe UI", Arial, sans-serif; }
+  main { max-width: 182mm; margin: 0 auto; }
+  h1 { font-size: 15pt; margin: 0 0 1mm; }
+  .bajada { color: var(--suave); margin: 0 0 3mm; }
+  ol.pasos { list-style: none; padding: 0; margin: 0; counter-reset: paso; }
+  ol.pasos > li { counter-increment: paso; position: relative; padding: 1.6mm 0 1.6mm 10mm;
+                  border-top: 1px solid var(--linea); }
+  ol.pasos > li::before { content: counter(paso); position: absolute; left: 0; top: 1.6mm;
+                          width: 7mm; height: 7mm; border-radius: 50%; background: var(--tinta);
+                          color: #fff; font-weight: 700; text-align: center; line-height: 7mm; }
+  h2 { font-size: 11pt; margin: 0 0 .8mm; }
+  p, ul { margin: 0 0 .8mm; }
+  ul { padding-left: 4.5mm; }
+  .pantalla { font-weight: 600; }
+  .no-subir { background: var(--fondo); border: 2px solid var(--tinta); padding: 1.6mm 2mm; }
+  .no-subir strong { text-transform: uppercase; }
+  .completar { display: inline-block; min-width: 55mm; border-bottom: 1px solid var(--tinta); }
+  .pie { color: var(--suave); font-size: 8.5pt; margin-top: 2mm; }
+  @media screen { body { padding: 16px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Historia Viva — Guía de una página</h1>
+  <p class="bajada">Para la SEU: entrar, cargar, validar y conversar. Las palabras
+    <span class="pantalla">entre comillas</span> son las que se ven en la pantalla.</p>
+
+  <ol class="pasos">
+    <li>
+      <h2>Entrar</h2>
+      <p>Abrí el navegador en <span class="completar">&nbsp;</span> y apretá
+        <span class="pantalla">«Entrar con la cuenta de la FIE»</span>. Usá tu cuenta institucional
+        de Google. Arriba vas a ver <span class="pantalla">«Entraste como …»</span> con tu nombre y tu rol.</p>
+    </li>
+    <li>
+      <h2>Cargar y esperar</h2>
+      <p>En <span class="pantalla">«Subir una Pieza nueva»</span> arrastrá el archivo o hacé clic
+        para elegirlo: fotografía, PDF, Word, planilla, texto o video. La Pieza aparece en
+        <span class="pantalla">«Mis Piezas»</span>, en el grupo <span class="pantalla">«Procesando»</span>.
+        Una foto tarda <strong>minutos</strong> en leerse: <strong>no esperés, volvé más tarde</strong>.
+        Podés seguir cargando mientras tanto.</p>
+    </li>
+    <li>
+      <h2>Abrir una Pieza Pendiente</h2>
+      <p>Cuando está lista pasa al grupo <span class="pantalla">«Para validar»</span> como
+        <span class="pantalla">«○ Pendiente»</span>. Apretá <span class="pantalla">«Validar»</span>:
+        se abre la pantalla partida, con el <strong>original a la izquierda</strong> (con
+        <span class="pantalla">«+»</span> y <span class="pantalla">«−»</span> para acercar) y la
+        <strong>Ficha a la derecha</strong>, que propuso el sistema.</p>
+    </li>
+    <li>
+      <h2>Completar lo marcado y validar</h2>
+      <p>Compará la Ficha con el original y corregí lo que esté mal. El recuadro
+        <span class="pantalla">«⚠ Falta para validar»</span> lista los campos vacíos: un clic en
+        <span class="pantalla">«Falta: …»</span> te lleva al campo. Cuando dice
+        <span class="pantalla">«✓ Está todo»</span>, apretá <span class="pantalla">«Validar y firmar»</span>:
+        la Ficha queda firmada con tu nombre. Si no podés terminar, <span class="pantalla">«Guardar como está»</span>
+        la deja <span class="pantalla">«◐ Incompleta»</span> para seguir después.</p>
+    </li>
+    <li>
+      <h2>Conversar con el Acervo</h2>
+      <p>Apretá <span class="pantalla">«Conversar»</span>, escribí la pregunta y
+        <span class="pantalla">«Enviar»</span>. Primero aparecen las <span class="pantalla">«Fuentes»</span>
+        (las Fichas encontradas) y después la respuesta. Cada <strong>[1]</strong>, <strong>[2]</strong>
+        de la respuesta lleva a la Ficha que la respalda. Solo responde con Piezas Validadas.</p>
+    </li>
+    <li class="no-subir">
+      <h2>No subir</h2>
+      <p><strong>No se sube</strong> material disciplinario, datos de salud ni listados con sueldos.
+        Ante la duda, no lo subas y consultá a quien figura abajo. La misma regla está en la
+        pantalla de carga.</p>
+    </li>
+    <li>
+      <h2>A quién avisar</h2>
+      <p>Nombre: <span class="completar">&nbsp;</span> &nbsp; Celular: <span class="completar">&nbsp;</span></p>
+      <p>Así se ve <strong>«el sistema está lento»</strong>:</p>
+      <ul>
+        <li>Una Pieza sigue en <span class="pantalla">«● Recibida, procesando»</span> más de 30 minutos,
+          o dice <span class="pantalla">«esperando al motor»</span>.</li>
+        <li>Arriba aparece una franja: <span class="pantalla">«El sistema de lectura automática no
+          está disponible»</span> o <span class="pantalla">«Procesamiento detenido»</span>. Podés seguir
+          subiendo y validando: no se pierde nada.</li>
+        <li>En <span class="pantalla">«Conversar»</span> las Fuentes o la respuesta no llegan después de un minuto.</li>
+      </ul>
+      <p>Avisá con la hora, la pantalla y el nombre del archivo. No cargues de nuevo lo mismo.</p>
+    </li>
+  </ol>
+  <p class="pie">Historia Viva — FIE. Para el detalle, el manual completo está en
+    <span class="pantalla">/ayuda</span>.</p>
+</main>
+</body>
+</html>

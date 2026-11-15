@@ -1,0 +1,555 @@
+/* Tokens de pantalla-validacion.md §9. Los cuatro colores de estado son los únicos
+   colores semánticos fuertes: todo lo demás vive en la escala neutra. */
+:root {
+  --color-fondo: #FAFAF8;
+  --color-superficie: #FFFFFF;
+  --color-borde: #D8D5CE;
+  --color-texto: #26261F;
+  --color-texto-secundario: #6B675C;
+  --color-primario: #1F4B3F;
+  --color-primario-hover: #163A31;
+  --color-propuesto: #2E6E8E;
+  --color-contexto: #B8863B;
+  --estado-recibida: #8C8C8C;
+  --estado-pendiente: #2E6E8E;
+  --estado-incompleta: #B8863B;
+  --estado-validada: #1F7A4D;
+  --color-error: #B3271E;
+  --proporcion: 45%;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, "Segoe UI", Arial, sans-serif;
+  font-size: 16px;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* El foco siempre visible: la sesión observada puede incluir a alguien que navegue
+   con Tab, y perder el foco en un formulario largo es la fricción que este prototipo
+   existe para detectar (§9, contraste). */
+:focus-visible { outline: 2px solid var(--color-primario); outline-offset: 2px; }
+
+a { color: var(--color-primario); }
+
+/* ── Cabecera ─────────────────────────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: var(--color-superficie);
+  border-bottom: 1px solid var(--color-borde);
+  flex: 0 0 auto;
+}
+/* El landmark principal ocupa lo que deja el encabezado, como antes el `body`. */
+main { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+
+header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+header .persona { margin-left: auto; font-size: 14px; color: var(--color-texto-secundario); }
+
+.franja {
+  padding: 10px 24px;
+  font-size: 14px;
+  background: #E8EEF2;
+  border-bottom: 1px solid var(--color-borde);
+  color: var(--color-texto);
+}
+
+/* ── Botones ──────────────────────────────────────────────────────────── */
+button {
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--color-primario); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Los dos guardados tienen el mismo tamaño a propósito: ninguno es "el correcto" y
+   el otro "el de emergencia" (§5). */
+.guardado button {
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px 24px;
+  min-width: 15rem;
+}
+.guardado .principal {
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+  color: #fff;
+}
+.guardado .principal:hover:not(:disabled) { background: var(--color-primario-hover); }
+
+/* ── Pantalla partida ─────────────────────────────────────────────────── */
+#partida {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: var(--proporcion) 8px 1fr;
+  min-height: 0;
+}
+#partida[hidden] { display: none; }
+
+.divisor {
+  background: var(--color-borde);
+  cursor: col-resize;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+}
+.divisor:hover, .divisor.arrastrando { background: var(--color-primario); }
+
+.panel { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.panel > h2 {
+  font-size: 14px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--color-texto-secundario);
+  margin: 0;
+  padding: 16px 24px 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── Panel izquierdo: el original ─────────────────────────────────────── */
+#panel-original { border-right: 1px solid var(--color-borde); background: #F1F0EC; }
+.controles-zoom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px 8px;
+  font-size: 14px;
+}
+.controles-zoom .nivel { min-width: 4rem; text-align: center; color: var(--color-texto-secundario); }
+#visor {
+  flex: 1 1 auto;
+  overflow: auto;
+  margin: 0 24px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  min-height: 0;
+}
+#visor.arrastrable { cursor: grab; }
+#visor.arrastrando { cursor: grabbing; }
+#visor img { display: block; width: 100%; max-width: none; }
+#visor iframe { display: block; width: 100%; height: 100%; border: 0; }
+#visor .sin-visor { padding: 32px 24px; font-size: 14px; color: var(--color-texto-secundario); }
+/* Un Word no se puede pintar en el navegador: a la izquierda va su texto extraído, y el
+   rótulo queda fijo arriba para que nunca se lea como si fuera el original. */
+#visor .rotulo-texto {
+  position: sticky;
+  top: 0;
+  margin: 0;
+  padding: 8px 16px;
+  background: #FDF4E3;
+  border-bottom: 1px solid var(--color-borde);
+  font-size: 13px;
+  color: var(--color-texto-secundario);
+}
+#visor .texto-extraido {
+  margin: 0;
+  padding: 16px;
+  font-family: inherit;
+  font-size: 100%;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+#visor .datos-aporte {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-borde);
+  font-size: 14px;
+}
+#visor .datos-aporte dt { color: var(--color-texto-secundario); }
+#visor .datos-aporte dd { margin: 0; overflow-wrap: anywhere; }
+.pie-original { padding: 12px 24px 16px; font-size: 14px; }
+.pie-original .archivo { overflow-wrap: anywhere; color: var(--color-texto-secundario); }
+
+/* ── Panel derecho: la Ficha ──────────────────────────────────────────── */
+#panel-ficha { background: var(--color-fondo); }
+#ficha-scroll { flex: 1 1 auto; overflow: auto; padding: 0 32px 24px; min-height: 0; }
+
+.badge {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 12px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.badge.Recibida { background: var(--estado-recibida); color: #26261F; }
+.badge.Pendiente { background: var(--estado-pendiente); }
+.badge.Incompleta { background: var(--estado-incompleta); color: #26261F; } /* blanco sobre ocre no llega a 4,5:1 */
+.badge.Validada { background: var(--estado-validada); }
+
+.aviso-reapertura, .aviso-resumen {
+  background: #FBF3E3;
+  border: 1px solid var(--color-contexto);
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* El panel de faltantes no desaparece cuando está todo completo: cambia de estado
+   (§4), para que la persona no se pregunte dónde quedó. */
+#faltantes {
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  font-size: 16px;
+}
+#faltantes.con-faltantes { background: #FBF3E3; border: 1px solid var(--color-contexto); }
+#faltantes.completo { background: #EAF4EE; border: 1px solid var(--estado-validada); }
+#faltantes ul { margin: 8px 0 0; padding-left: 20px; }
+#faltantes li { margin: 4px 0; }
+#faltantes button {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 16px;
+  color: var(--color-primario);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.bloque { margin-bottom: 24px; }
+.bloque > h3 {
+  font-size: 14px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--color-texto-secundario);
+  margin: 0 0 8px;
+}
+.caja {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.campo { margin-bottom: 16px; }
+.campo:last-child { margin-bottom: 0; }
+.campo > label, .campo > .rotulo {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+/* Autor «Desconocido» y Carreras: casillas, una por renglón en pantallas chicas. */
+.campo > label.casilla, .casilla {
+  display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 8px 0 0;
+}
+.casilla input { width: 20px; height: 20px; margin: 0; }
+.casillas { border: 0; margin: 0; padding: 0; min-width: 0; }
+.casillas legend { font-weight: 600; padding: 0; }
+#carreras { display: flex; flex-wrap: wrap; column-gap: 24px; }
+.ayuda { font-size: 14px; color: var(--color-texto-secundario); margin: 4px 0 0; }
+.marca { font-size: 14px; margin: 4px 0 0; }
+.marca.propuesto { color: var(--color-propuesto); }
+.marca.editado { color: var(--color-texto-secundario); }
+
+input[type="text"], input[type="number"], input[type="date"], select, textarea {
+  font: inherit;
+  font-size: 16px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  background: var(--color-superficie);
+  color: var(--color-texto);
+}
+textarea { resize: vertical; line-height: 1.5; }
+
+/* Falta un dato: borde ocre, nunca rojo. Nada se rompió (§2, §4). */
+.campo.falta input, .campo.falta select, .campo.falta textarea,
+.campo.falta .control-fecha { border-color: var(--color-contexto); }
+
+/* El filete y el ícono se repiten en cada campo: de un vistazo se ve qué se revisa y
+   qué se aporta desde cero (§1). */
+.propuesto-filete { border-left: 4px solid var(--color-propuesto); padding-left: 12px; }
+.editado-filete { border-left: 4px solid var(--color-borde); padding-left: 12px; }
+.contexto-filete { border-left: 4px solid var(--color-contexto); padding-left: 12px; }
+
+.zona-propuesta { background: #F3F5F7; border-radius: 6px; padding: 12px; }
+
+.control-fecha {
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  background: var(--color-superficie);
+  padding: 12px;
+}
+.control-fecha fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.control-fecha fieldset + fieldset { margin-top: 16px; }
+.control-fecha legend { font-size: 16px; font-weight: 600; padding: 0 0 8px; }
+.control-fecha legend .opcional { font-weight: 400; color: var(--color-texto-secundario); }
+.detalle-fecha { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.detalle-fecha label { display: block; font-size: 14px; color: var(--color-texto-secundario); margin-bottom: 4px; }
+.detalle-fecha .par { min-width: 8rem; }
+.detalle-fecha input, .detalle-fecha select { min-width: 8rem; }
+.detalle-fecha .par-dia { min-width: 5.5rem; }
+.detalle-fecha .par-dia input { min-width: 5.5rem; width: 5.5rem; }
+.detalle-fecha [aria-invalid="true"] { border-color: var(--color-error); }
+#fecha-confirmacion { margin: 16px 0 0; font-weight: 600; }
+#fecha-confirmacion.vacia { font-weight: 400; color: var(--color-texto-secundario); }
+.error { color: var(--color-error); font-size: 14px; margin: 8px 0 0; }
+/* Los errores de la Fecha viven siempre en el DOM (para que aria-live los anuncie) y
+   vacíos no ocupan lugar. */
+.control-fecha .error:empty { margin: 0; }
+
+.separador { border: 0; border-top: 1px solid var(--color-borde); margin: 24px 0; }
+
+/* Resalta un instante el campo al que lleva el panel de faltantes (§4). */
+.resaltado { outline: 3px solid var(--color-contexto); outline-offset: 4px; border-radius: 6px; }
+
+.guardado {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--color-borde);
+  background: var(--color-superficie);
+  padding: 16px 32px;
+}
+.guardado .botones { display: flex; gap: 16px; justify-content: flex-end; }
+.guardado .firma { margin: 8px 0 0; font-size: 14px; color: var(--color-texto-secundario); text-align: right; }
+
+/* ── Mensajes de pantalla completa ────────────────────────────────────── */
+.centro {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+.centro[hidden] { display: none; }
+.tarjeta {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  padding: 32px;
+  max-width: 34rem;
+}
+.tarjeta h2 { margin: 0 0 8px; font-size: 18px; }
+.tarjeta p { margin: 0 0 16px; }
+
+#confirmacion { position: fixed; inset: 0; background: rgba(38, 38, 31, .35); z-index: 10; }
+#confirmacion[hidden] { display: none; }
+#confirmacion .centro { height: 100%; }
+#confirmacion .tarjeta { width: min(34rem, calc(100% - 64px)); }
+#confirmacion .icono { font-size: 18px; font-weight: 600; }
+#confirmacion.validada .icono { color: var(--estado-validada); }
+#confirmacion.incompleta .icono { color: var(--estado-incompleta); }
+#confirmacion .detalle { font-size: 14px; color: var(--color-texto-secundario); }
+#confirmacion .botones { display: flex; gap: 12px; justify-content: flex-end; }
+
+/* ── M1: otra persona guardó mientras editabas (409) ──────────────────── */
+#conflicto, #retiro, #alerta-firma {
+  width: min(44rem, calc(100% - 32px));
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  padding: 32px;
+  color: var(--color-texto);
+}
+#conflicto::backdrop, #retiro::backdrop, #alerta-firma::backdrop { background: rgba(38, 38, 31, .35); }
+#conflicto h2, #retiro h2, #alerta-firma h2 { margin: 0 0 8px; font-size: 18px; }
+#conflicto table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+#conflicto th, #conflicto td {
+  text-align: left; vertical-align: top; padding: 6px 8px;
+  border-bottom: 1px solid var(--color-borde);
+}
+#conflicto th { white-space: nowrap; }
+#conflicto td { overflow-wrap: anywhere; }
+#conflicto .sin-cambios { color: var(--color-texto-secundario); font-style: italic; }
+#conflicto-validada { border-left: 4px solid var(--estado-validada); padding: 8px 12px; }
+#conflicto .botones, #retiro .botones, #alerta-firma .botones { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
+#version-nueva { border: 1px solid var(--color-propuesto); border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; }
+#version-nueva h3 { margin: 0 0 8px; font-size: 15px; }
+#version-nueva dt { font-weight: 600; font-size: 14px; }
+#version-nueva dd { margin: 0 0 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* ── El visor de planilla: una pestaña por hoja (091) ───────────────────── */
+#visor.planilla { display: flex; flex-direction: column; overflow: hidden; }
+#visor .avisos-planilla {
+  margin: 0;
+  padding: 8px 16px 8px 32px;
+  background: #FDF4E3;
+  border-bottom: 1px solid var(--color-borde);
+  font-size: 13px;
+}
+#visor .pestanas {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 8px 16px 0;
+  border-bottom: 1px solid var(--color-borde);
+}
+#visor .pestanas [role="tab"] {
+  padding: 6px 12px;
+  border: 1px solid var(--color-borde);
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font: inherit;
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+#visor .pestanas [aria-selected="true"] {
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+  color: #FFFFFF;
+}
+#visor .hojas, #visor .hoja { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+#visor .hoja[hidden] { display: none; }
+#visor .nota-hoja {
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--color-texto-secundario);
+}
+#visor .tabla-hoja { flex: 1 1 auto; overflow: auto; min-height: 0; }
+#visor .tabla-hoja:focus-visible, #visor .hoja:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: -2px;
+}
+#visor .tabla-hoja table { border-collapse: separate; border-spacing: 0; font-size: inherit; }
+#visor .tabla-hoja caption {
+  padding: 8px 16px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--color-texto-secundario);
+}
+#visor .tabla-hoja th, #visor .tabla-hoja td {
+  padding: 4px 8px;
+  border-right: 1px solid var(--color-borde);
+  border-bottom: 1px solid var(--color-borde);
+  text-align: left;
+  vertical-align: top;
+  max-width: 40ch;
+  overflow-wrap: anywhere;
+}
+/* El encabezado queda fijo al bajar por la hoja. */
+#visor .tabla-hoja thead th { position: sticky; top: 0; z-index: 1; background: #EFEDE7; }
+#visor .tabla-hoja tbody th {
+  background: var(--color-fondo);
+  color: var(--color-texto-secundario);
+  font-weight: normal;
+  text-align: right;
+}
+
+/* ── Acciones y M3: quitar la Pieza del Acervo (105) ─────────────────── */
+.acciones { position: relative; }
+.acciones summary {
+  font-size: 14px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.acciones[open] #quitar { position: absolute; right: 0; top: calc(100% + 4px); white-space: nowrap; z-index: 2; }
+#retiro { width: min(36rem, calc(100% - 32px)); }
+#retiro ul { padding-left: 20px; font-size: 14px; }
+#retiro label { display: block; font-weight: 600; margin-top: 12px; }
+#retiro textarea { width: 100%; font: inherit; margin-top: 4px; }
+#retiro .ayuda { font-size: 14px; color: var(--color-texto-secundario); margin: 4px 0 16px; }
+#retiro .error { color: var(--color-error); }
+#retiro .peligro { background: var(--color-error); border-color: var(--color-error); color: #fff; }
+
+/* ── Video (P5e) ── */
+.solo-lectores { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+#visor.video { display: flex; flex-direction: column; gap: 8px; padding: 8px; }
+#visor video { display: block; width: 100%; max-height: 70vh; background: #000; }
+#visor .insertar-marca { align-self: flex-start; }
+#visor .datos-tecnicos p { margin: 0; font-size: 13px; }
+.aviso-descripcion { color: var(--color-texto-secundario); }
+.marcas-de-tiempo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; font-size: 13px; }
+.marcas-de-tiempo[hidden] { display: none; }
+.marcas-de-tiempo ul { display: contents; list-style: none; }
+.marcas-de-tiempo a { font-family: ui-monospace, monospace; }
+/* ── Afirmaciones (155): el estado se lee en palabras y con ícono, no solo por el color ── */
+.afirmaciones { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.atajos { margin: 0 0 0.75rem; }
+.atajos summary { cursor: pointer; }
+
+.afirmacion {
+  border: 1px solid var(--color-borde);
+  border-left: 4px solid var(--color-propuesto);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.afirmacion.aceptada { border-left-color: var(--estado-validada); }
+.afirmacion.rechazada { border-left-color: var(--color-borde); background: #F3F2EF; }
+.afirmacion.rechazada .texto-afirmacion { color: var(--color-texto-secundario); }
+.texto-afirmacion { margin: 0 0 8px; overflow-wrap: anywhere; }
+.decision { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.estado-afirmacion { font-size: 14px; font-weight: 600; margin-right: auto; }
+.decision button[aria-pressed="true"] {
+  background: var(--color-primario); border-color: var(--color-primario); color: #fff;
+}
+#campo-afirmaciones.falta { border-color: var(--color-contexto); }
+/* 148: cada imagen embebida sin texto, con su miniatura y sus Afirmaciones. */
+.imagen-embebida { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--color-borde); }
+.imagen-embebida h4 { margin: 0 0 8px; font-size: 15px; }
+.imagen-embebida .miniatura { display: block; max-width: 100%; max-height: 200px; border: 1px solid var(--color-borde); }
+.estado-imagen { margin: 8px 0; font-size: 14px; }
+#aviso-descripcion-fallida { margin: 12px 0 0; }
+
+/* ── Alerta de inyección (109): ocre en el borde, el texto en el color de texto; nunca rojo ── */
+.alerta-inyeccion {
+  background: #FBF3E3;
+  border: 1px solid var(--color-contexto);
+  border-left-width: 6px;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--color-texto);
+}
+.alerta-inyeccion h3 { margin: 0 0 4px; font-size: 15px; }
+.alerta-inyeccion p { margin: 0; }
+.alerta-inyeccion ul, #alerta-firma ul { margin: 8px 0 0; padding-left: 20px; overflow-wrap: anywhere; }
+
+/* ── Cruce con la lectura automática (145): lo sin respaldo arriba; la región se marca sobre la
+   imagen entera, con borde y sin tapar nada, y su texto está en el ítem ── */
+.grupo-afirmaciones { margin-top: 12px; }
+.grupo-afirmaciones h4 { margin: 0 0 4px; font-size: 15px; }
+.grupo-afirmaciones .ayuda { margin: 0; }
+#aceptar-respaldadas { margin-top: 8px; }
+.respaldo { margin: 0 0 8px; font-size: 13px; color: var(--color-texto-secundario); overflow-wrap: anywhere; }
+#afirmaciones-respaldadas .afirmacion:hover, #afirmaciones-respaldadas .afirmacion:focus-within {
+  outline: 2px solid var(--color-primario); outline-offset: 1px;
+}
+#lienzo-original { position: relative; width: 100%; }
+/* El borde va por fuera de la caja del OCR (no tapa lo leído) y en ámbar con contorno negro: se ve
+   sobre fondo claro y sobre las franjas oscuras del cartel. */
+.region-resaltada {
+  position: absolute;
+  box-sizing: content-box;
+  margin: -6px 0 0 -6px;
+  padding: 2px;
+  border: 3px solid #FFC400;
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* 146: el aviso del resumen rehecho va pegado a su campo, no arriba del panel. */
+.aviso-resumen { margin: 8px 0 0; }
+.aviso-resumen p { margin: 0; }
+.aviso-resumen button { margin-top: 8px; }

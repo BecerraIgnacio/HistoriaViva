@@ -1,0 +1,21 @@
+# Sesión presencial con el Agente 1 (R-32, runbook R18, ticket 131): se suma a `compose.yml` solo
+# mientras dura la sesión y publica `/v1`, y nada más, en la IP de la LAN, puerto 8000. La web,
+# `/api` y `/auth` siguen solo en 127.0.0.1:80. Con `:?`, sin `HV_IP_LAN` no levanta: vacía,
+# Docker publicaría en todas las interfaces.
+#
+# Orden: el del runbook R18 (token y freno antes de levantar; al terminar, freno, revocar, bajar).
+# En una red Pública, el firewall de Windows o Docker Desktop puede bloquear el 8000.
+#
+#   $env:HV_IP_LAN = "192.168.43.10"   # la IPv4 de la PC en el hotspot (`ipconfig`)
+#   docker compose -f compose.yml -f compose.sesion-presencial.yml up -d caddy
+#   docker compose up -d caddy           # al terminar: Caddy vuelve a solo 127.0.0.1:80
+services:
+  caddy:
+    ports:
+      - "${HV_IP_LAN:?Falta HV_IP_LAN: la IPv4 de la PC en la LAN}:8000:8000"
+    command: [caddy, run, --config, /etc/caddy/Caddyfile.sesion-presencial, --adapter, caddyfile]
+    volumes:
+      - ./Caddyfile.sesion-presencial:/etc/caddy/Caddyfile.sesion-presencial:ro
+    # Un reinicio de la PC no vuelve a publicar el 8000 en la LAN (riesgo 49): Caddy queda
+    # abajo hasta `docker compose up -d caddy`.
+    restart: "no"

@@ -1,0 +1,37 @@
+# Proxy local del MVP: compose lo publica solo en 127.0.0.1:80 (DEC-119, R-35); un solo bloque
+# para la web y la API. Sin `encode`: el original viaja tal cual en los 206 de `Range`, y
+# `flush_interval -1` entrega el `text/event-stream` de la Conversación sin buffer.
+# Los encabezados de seguridad los pone la aplicación (`api/cabeceras.py`); acá solo se quita
+# `Server`.
+{
+	servers {
+		# La app no tiene tope de lectura: sin este, cada subida lenta ocupa un hilo (007).
+		timeouts {
+			read_body 10m
+		}
+	}
+}
+
+http://localhost, http://127.0.0.1 {
+	# Un solo origen (`HV_ORIGEN`): entrando por `127.0.0.1`, toda mutación daría 403.
+	@por_ip host 127.0.0.1
+	redir @por_ip http://localhost{uri}
+	# Dos `request_body` que coinciden se componen y gana el menor: los matchers no se pisan.
+	@video path /api/piezas/video
+	@resto not path /api/piezas/video
+	request_body @video {
+		max_size 2050MiB
+	}
+	request_body @resto {
+		max_size 45MB
+	}
+	header -Server
+	header -Via
+	# En el servidor de la universidad, con HTTPS (nunca en la PC por HTTP):
+	#   header Strict-Transport-Security max-age=31536000
+	# y recalcular `read_body`: 10m exige ~3,6 MB/s para un video de 2 GiB, que por loopback
+	# sobra y por la red no (por ejemplo, 60m).
+	reverse_proxy web:8000 {
+		flush_interval -1
+	}
+}

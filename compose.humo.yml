@@ -1,0 +1,72 @@
+# Prueba de humo del servidor (runbook R16, paso 8; ticket 121). SOLO en la VM de prueba, nunca en
+# el servidor real: deja Piezas, personas y firmas que el paso 9 exige que no estén. Se suma a
+# `compose.yml` y `compose.servidor.yml`; no es parte de la receta de producción.
+#
+# `oidc-falso` es el proveedor OIDC de 036 (un Google de mentira) como servicio aparte; en el
+# `.env` de la VM, `HV_OIDC_EMISOR=http://oidc-falso:9000`. `humo` corre `tests/prueba_de_humo.py`
+# dentro de la red del compose: entra por Caddy con el nombre del servidor, que acá resuelve al
+# propio Caddy, y verifica su TLS con la raíz de `tls internal`. Los dos usan la imagen de la app
+# y montan `tests/` del clon: no se instala nada.
+#
+#   dc -f compose.humo.yml up -d oidc-falso caddy web
+#   dc -f compose.humo.yml run --rm humo
+#   dc -f compose.humo.yml rm -sf oidc-falso   # al terminar
+services:
+  oidc-falso:
+    image: historiaviva-mvp-app
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    entrypoint: [python, /humo/proveedor_oidc_falso.py]
+    command:
+      - --host
+      - 0.0.0.0
+      - --puerto
+      - "9000"
+      - --emisor
+      - http://oidc-falso:9000
+      - --cliente-id
+      - ${HV_OIDC_CLIENTE_ID:?Falta HV_OIDC_CLIENTE_ID en .env}
+      - --secreto
+      - ${HV_OIDC_SECRETO:?Falta HV_OIDC_SECRETO en .env}
+    volumes:
+      - ./tests:/humo:ro
+    restart: "no"
+
+  humo:
+    image: historiaviva-mvp-app
+    security_opt: [no-new-privileges:true]
+    # Solo con `run`: `up` no la arranca.
+    profiles: [humo]
+    # Root para leer la raíz de `tls internal`, que Caddy guarda solo para su usuario. Es un
+    # contenedor de prueba, de la VM, que no queda corriendo.
+    user: root
+    entrypoint: [python, /humo/prueba_de_humo.py]
+    command:
+      - --url
+      - ${HV_URL_PUBLICA:?Falta HV_URL_PUBLICA en .env}
+      - --emisor
+      - http://oidc-falso:9000
+      - --admin
+      - ${HV_HUMO_ADMIN:?Falta HV_HUMO_ADMIN en .env (el primer Administrador técnico)}
+      - --ca
+      - /caddy/caddy/pki/authorities/local/root.crt
+    volumes:
+      - ./tests:/humo:ro
+      - hvmvp_caddy:/caddy:ro
+    depends_on:
+      - oidc-falso
+      - caddy
+    restart: "no"
+
+  # `humo`: las guardas del servidor, salvo el emisor https; el falso habla http. Solo este
+  # override lo pone: un `.env` no puede (`compose.servidor.yml` fija `servidor`).
+  web:
+    environment:
+      HV_DESPLIEGUE: humo
+
+  # Dentro de la red, el nombre del servidor es Caddy: `humo` entra como un navegador, por TLS.
+  caddy:
+    networks:
+      default:
+        aliases:
+          - ${HV_DOMINIO:?Falta HV_DOMINIO en .env}

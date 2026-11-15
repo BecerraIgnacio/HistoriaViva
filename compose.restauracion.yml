@@ -1,0 +1,48 @@
+# Restauración probada (spec §2.3, historia 230, DEC-144): se suma a `compose.yml` y lo vuelve otro
+# proyecto, con sus propios volúmenes, otros puertos y sin Caddy. Lo usa
+# `python -m historia_viva.respaldo.restauracion restaurar`; a mano:
+#
+#   docker compose --env-file D:\hv\.env -f compose.yml -f compose.restauracion.yml up -d --wait web
+#
+# `HV_ORIGINALES` y `HV_VOLCADOS_RESTAURADOS` son las carpetas que dejó `restic restore`.
+name: historiaviva-restauracion
+
+services:
+  postgres:
+    # Para los criterios, desde la PC; el 5432 de la PC puede estar tomado. Una red `internal`
+    # no publica puertos: la restaurada suma `default`.
+    networks: [base, default]
+    ports:
+      - "127.0.0.1:54330:5432"
+    volumes:
+      - ${HV_VOLCADOS_RESTAURADOS:?Falta HV_VOLCADOS_RESTAURADOS}:/restauracion:ro
+
+  web:
+    # Para abrir la pantalla partida en la restaurada sin Caddy.
+    ports:
+      - "127.0.0.1:8081:8000"
+
+  # Embebe las 3 consultas de referencia (ticket 116) con los modelos del origen, de solo lectura:
+  # no se respaldan (spec §2.3) y bajarlos de nuevo tarda. Sin el `ollama` de generación.
+  ollama-embeddings:
+    volumes:
+      - modelos_del_origen:/root/.ollama:ro
+    depends_on: !reset {}
+
+  caddy:
+    profiles: ["nunca"]
+
+# Con el `name:` de `compose.yml`, los dos proyectos compartirían la base: `pg_restore --clean`
+# borraría la del origen.
+volumes:
+  hvmvp_pgdata:
+    name: hvrestauracion_pgdata
+  hvmvp_modelos:
+    name: hvrestauracion_modelos
+  hvmvp_caddy:
+    name: hvrestauracion_caddy
+  hvmvp_sin_referencia:
+    name: hvrestauracion_sin_referencia
+  modelos_del_origen:
+    name: hvmvp_modelos
+    external: true

@@ -1,0 +1,127 @@
+requisito,prioridad,alcance,historias
+RF-01,M,Entra,65; 66; 74; 75
+RF-02,M,Entra,67; 68; 76; 79; 80; 81
+RF-03,M,Entra,69; 70; 71; 78
+RF-04,M,Entra,91; 98; 99; 100; 101; 111; 112
+RF-05,M,Entra,77; 82
+RF-06,M,Entra; se activa con C14/C34,111; 130; 136; 184; 231
+RF-07,P,Entra,92; 111
+RF-08,M,Entra,78; 82
+RF-09,M,Entra,92; 101; 118; 129
+RF-10,M,Entra,123; 124
+RF-11,P,Entra,111; 113; 114; 115; 116
+RF-12,P,Entra,120
+RF-13,M,Entra,117; 119
+RF-14,M,Entra,117
+RF-15,M,Entra,121; 122; 133; 140; 144
+RF-16,M,Entra,108; 109
+RF-17,M,Entra,104; 105; 106; 107; 292; 293; 296
+RF-18,M,Entra; se activa con C29,125; 126; 127; 128; 206
+RF-19,M,Entra,131
+RF-20,M,Entra,132
+RF-21,M,Entra,134; 135; 136; 137; 138
+RF-22,M,Entra,142; 143; 245-256
+RF-23,M,Entra,173; 174; 176; 177; 178; 179; 182; 183; 184; 188; 217
+RF-24,M,Entra,133; 176
+RF-25,M,Entra,129; 145; 191; 194
+RF-26,M,Entra,151; 152; 153; 154; 175; 181; 218
+RF-27,M,Entra,146; 147; 148; 149; 150; 279-290
+RF-28,M,Entra,169
+RF-29,M,Entra,157; 158; 209; 294; 295
+RF-30,M,Entra,141; 159; 160; 161; 162; 186
+RF-31,M,Entra,146; 147
+RF-32,M,Entra,163; 164; 165; 166
+RF-33,M,Entra,166; 167
+RF-34,M,Entra; se activa con C18,85; 86; 87; 228
+RF-35,M,Entra,189; 190
+RF-36,M,Entra,192
+RF-37,M,Entra,156; 185
+RF-38,M,Entra,91; 92; 93; 94; 95; 96; 97; 98; 113; 219; 220
+RF-39,M,Entra,99; 100; 101; 102; 103; 107; 114; 115; 116; 118
+RF-40,M,Entra,196; 197
+RF-41,M,Entra,170; 198; 199; 200; 207
+RF-42,M,Entra; se activa con C31,243
+RF-43,M,Entra,82; 83; 105; 291; 292
+RF-44,M,Entra,88; 89
+RF-45,M,Entra,171; 290
+RF-46,M,Entra,173; 217
+RF-47,M,Entra,245-256
+RF-48,M,Entra,257-268
+RF-49,M,Entra,269-278
+RF-50,M,Entra,283; 284
+RF-51,M,Entra,285; 286
+RF-52,M,Entra,287; 288
+RF-53,M,Entra,279-282
+RF-54,M,Entra,291
+RF-55,M,Entra,297-302
+RNF-01,—,Entra,164; 212
+RNF-02,—,Entra,211; 226
+RNF-03,—,Entra,237
+RNF-04,—,Entra,219; 223
+RNF-05,—,Entra,77; 232
+RNF-06,—,Entra,82; 143; 232
+RNF-07,—,Entra,120; 199
+RNF-08,—,Entra,167; 213
+RNF-09,—,Entra,212
+RNF-10,—,Entra,139; 204; 215; 225
+RNF-11,—,Entra,201; 202; 205
+RNF-12,—,Entra,80; 203; 205
+RNF-13,—,Entra; se activa con C18,85; 86; 228
+RNF-14,—,Entra,222
+RNF-15,—,Entra,67; 81; 99; 216; 231
+RNF-16,—,Entra,163; 164
+RNF-17,—,Entra,229; 230; 238
+RNF-18,—,Entra,
+RNF-19,—,Entra,
+RNF-20,—,Entra,94; 231
+RNF-21,—,Entra,228
+RNF-22,—,Entra,90
+RNF-23,—,Entra,87
+RNF-24,—,Entra,162; 225
+RNF-25,—,Entra,215; 232; 233
+RNF-26,—,Entra,168; 208; 268; 302
+CU-01,M,Entra,65; 66; 73
+CU-02,M · P,Entra,67; 68; 76; 79; 80; 81; 84
+CU-03,M · P,Entra,77; 82; 83; 92
+CU-04,M,Entra,104; 105; 106
+CU-05,M · P,Entra,109; 111; 117; 119; 120; 121
+CU-06,M,Entra,117
+CU-07,M,Entra,125; 126; 127; 128
+CU-08,M,Entra,108; 109; 110
+CU-09,M,Entra,131; 132; 133; 134; 135; 137; 138; 245-256
+CU-10,M,Entra,142; 143
+CU-11,M,Entra,130; 136
+CU-12,M,Entra,175; 176; 177; 178; 181; 182; 185
+CU-13,—,Entra,189; 190
+CU-14,M,Entra,129; 191; 192; 193; 194
+CU-15,M,Entra; se activa con C18,85; 86; 87
+CU-16,M,Entra,147; 148; 151; 152; 153; 154; 155
+CU-17,M,Entra,157; 158; 294; 295
+CU-18,M,Entra,159; 160; 161; 162
+CU-19,M,Entra,163; 164; 165; 166
+CU-20,M,Entra,168; 169; 205
+CU-21,M,Entra,167
+CU-22,—,Entra,99; 100; 101; 107; 114; 115; 116; 118
+CU-23,—,Entra,170; 196; 197
+HU-030,—,Entra,65-82; 117; 285-290
+HU-031,—,Entra,245-256
+HU-032,—,Entra,269-278
+DIR-03,—,Fuera del MVP,
+DIR-11,—,Fuera del MVP,
+DIR-16,—,Desvío documentado,
+DIR-44,—,Fuera del MVP,
+DIR-47,—,Desvío documentado,
+DIR-50,—,Desvío documentado,
+DIR-59,—,Desvío documentado,
+DIR-60,—,Desvío documentado,
+DIR-61,—,Desvío documentado,
+DIR-65,—,Desvío documentado,
+DIR-67,—,Desvío documentado,
+DIR-68,—,Desvío documentado,
+DIR-69,—,Desvío documentado,
+DIR-70,—,Desvío documentado,
+DIR-91,—,Desvío documentado,
+DIR-94,—,Desvío documentado,
+DIR-95,—,Desvío documentado,
+DIR-96,—,Desvío documentado,
+DIR-97,—,Desvío documentado,

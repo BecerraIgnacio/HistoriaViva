@@ -1,0 +1,65 @@
+body { font-family: system-ui, sans-serif; margin: 0; background: #f7f7f5; color: #1f1f1f; }
+main { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
+section { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+h1 { font-size: 1.4rem; margin: 0 0 16px; }
+h2 { font-size: 1.1rem; margin: 0 0 12px; }
+button { font-size: .95rem; padding: 6px 14px; border-radius: 6px; border: 1px solid #1F4B3F; background: #fff; color: #1F4B3F; cursor: pointer; }
+button.principal { border: 0; background: #1F4B3F; color: #fff; }
+button.frenar { border: 0; background: #7A3B1F; color: #fff; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.aviso { color: #555; font-size: .9rem; }
+.error { color: #9b2c2c; }
+.enlace { color: #1F4B3F; }
+.franja { background: #E8EEF2; border: 1px solid #ddd; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: .9rem; }
+.encabezado { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+nav[role="tablist"] { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid #ddd; margin-bottom: 16px; }
+nav[role="tablist"] button { border: 1px solid #ddd; border-bottom: 0; border-radius: 6px 6px 0 0; color: #1f1f1f; }
+nav[role="tablist"] button[aria-selected="true"] { background: #1F4B3F; border-color: #1F4B3F; color: #fff; }
+.frenos { display: grid; gap: 8px; margin-bottom: 16px; }
+.freno { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid #eee; }
+.freno .nombre { font-weight: 600; min-width: 9rem; }
+.freno .estado { flex: 1; }
+.estado-andando { color: #1F7A4D; }
+.estado-detenido { color: #B8863B; }
+label { font-weight: 600; display: block; margin-bottom: 4px; }
+textarea { font: inherit; width: 100%; box-sizing: border-box; min-height: 3.5rem; padding: 6px; }
+.acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.tabla { overflow-x: auto; margin-top: 20px; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+caption { text-align: left; font-weight: 600; font-size: 1.1rem; margin-bottom: 8px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+td.motivo { overflow-wrap: anywhere; }
+dialog { border: 1px solid #ddd; border-radius: 8px; padding: 20px; max-width: 28rem; }
+dialog::backdrop { background: rgb(0 0 0 / .35); }
+dialog h2 { margin-bottom: 8px; }
+h3 { font-size: 1rem; margin: 20px 0 8px; }
+input[type="text"], input[type="datetime-local"] { font: inherit; padding: 6px; box-sizing: border-box; }
+#nombre-agente, #email-persona, #nombre-persona { width: 100%; max-width: 24rem; }
+input[type="email"] { font: inherit; padding: 6px; box-sizing: border-box; }
+#alta-persona label[for] { margin-top: 8px; }
+td select { font: inherit; }
+fieldset { border: 1px solid #ddd; border-radius: 6px; margin: 12px 0 0; }
+fieldset label { font-weight: normal; display: flex; gap: 6px; align-items: center; margin: 4px 0; }
+.token-campo { display: flex; gap: 8px; margin: 12px 0; }
+.token-campo input { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: .85rem; }
+.pie-del-token { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+label.guardado { font-weight: normal; display: flex; gap: 6px; align-items: center; margin: 0; }
+.estado-vencido, .estado-revocado { color: #9b2c2c; font-weight: 600; }
+.alcances { color: #555; font-size: .85rem; }
+td .acciones { margin: 0; }
+code { font-size: .85rem; }
+.objetivo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 8px 24px; }
+.objetivo label { font-weight: normal; margin: 0; }
+#dia-objetivo { width: 4.5rem; font: inherit; padding: 6px; box-sizing: border-box; }
+select { font: inherit; padding: 5px; }
+.resultado { font-weight: 600; }
+.nota-banco { color: #555; font-size: .8rem; margin-top: 2px; }
+.estado-modelo-descargado, .estado-modelo-no_aplica { color: #1F7A4D; }
+.estado-modelo-no_descargado { color: #B8863B; font-weight: 600; }
+.estado-modelo-motor_no_responde, .estado-modelo-desconocido { color: #9b2c2c; font-weight: 600; }
+#editar-modelo label { margin-top: 8px; }
+#modelo { width: 100%; max-width: 24rem; }
+.parametros { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0 16px; }
+.parametros input { font: inherit; padding: 6px; box-sizing: border-box; width: 100%; }
+.aviso-modelo { color: #7A3B1F; }
+#errores-modelo ul { margin: 4px 0 0; padding-left: 20px; }

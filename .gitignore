@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Secretos
+.env
+.env.*
+!.env.example
+# Clave de la cuenta de servicio de Drive (DRV-08): se monta, nunca se versiona.
+drive_sa*.json
+
+# Originales subidos
+originales/
+
+# Conjunto de referencia del banco (HV_REFERENCIA), sus corridas y el corpus semilla real
+referencia/
+corpus-semilla/
+
+# Resultados de la suite, cobertura, SBOM y la exportación para pip-audit
+.resultados/
+cobertura.xml
+cobertura-html/
+.coverage*
+sbom.cdx.json
+requisitos.txt

@@ -1,0 +1,55 @@
+body { font-family: system-ui, sans-serif; margin: 0; background: #f7f7f5; color: #1f1f1f; }
+main { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
+section { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.encabezado { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+h1 { font-size: 1.4rem; margin: 0; overflow-wrap: anywhere; }
+h2 { font-size: 1.1rem; margin: 16px 0 12px; }
+button { font-size: 1rem; padding: 6px 14px; }
+.aviso { color: #555; font-size: .9rem; }
+.error { color: #9b2c2c; }
+.enlace { color: #1F4B3F; }
+.franja { background: #E8EEF2; border: 1px solid #ddd; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: .9rem; }
+.boton { display: inline-block; font-size: .9rem; padding: 6px 14px; border-radius: 6px; border: 0; background: #1F4B3F; color: #fff; text-decoration: none; cursor: pointer; }
+.boton:hover { background: #163A31; }
+.boton[hidden] { display: none; }
+.boton:disabled { background: #8FA59E; cursor: default; }
+#barra { width: min(100%, 24rem); vertical-align: middle; }
+#piezas { list-style: none; padding: 0; margin: 0; }
+#piezas li { display: grid; grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+#piezas .nombre { overflow-wrap: anywhere; }
+#piezas .accion { text-align: right; color: #555; font-size: .9rem; }
+#piezas .accion .boton + .boton { margin-left: 6px; }
+@media (max-width: 600px) {
+  #piezas li { grid-template-columns: minmax(0, 1fr); }
+  #piezas .accion { text-align: left; }
+}
+.heredados { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 12px; font-size: .9rem; }
+.heredados dt { color: #555; }
+.heredados dd { margin: 0; overflow-wrap: anywhere; }
+.campos { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 12px; align-items: center; margin: 12px 0; }
+.campos select, .campos input { font: inherit; max-width: 100%; }
+@media (max-width: 600px) { .campos, .heredados { grid-template-columns: minmax(0, 1fr); } }
+#bloque-piezas { list-style: none; padding: 0; margin: 8px 0; }
+#bloque-piezas li { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid #eee; overflow-wrap: anywhere; }
+#bloque-piezas .afuera { color: #8A6122; }
+dialog { max-width: min(32rem, calc(100vw - 32px)); border: 1px solid #ddd; border-radius: 8px; }
+.estado-Recibida { color: #6B6B6B; }
+.estado-Pendiente { color: #2E6E8E; }
+.estado-Incompleta { color: #8A6122; }
+.estado-Validada { color: #1F7A4D; }
+/* P10 Lotes (085). */
+.oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.filtros { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 16px; }
+.filtros fieldset { border: 0; margin: 0; padding: 0; display: flex; gap: 12px; }
+.filtros .boton { margin-left: auto; }
+.boton-secundario { font-size: .9rem; padding: 4px 10px; border-radius: 6px; border: 1px solid #1F4B3F; background: #fff; color: #1F4B3F; cursor: pointer; }
+.boton:disabled { background: #9AA8A3; cursor: not-allowed; }
+#lotes { list-style: none; padding: 0; margin: 0 0 12px; }
+#lotes li { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) auto; gap: 4px 12px; align-items: start; padding: 10px 0; border-bottom: 1px solid #eee; }
+#lotes .nombre, #lotes .piezas { display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+#lotes .accion { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+@media (max-width: 700px) {
+  #lotes li { grid-template-columns: minmax(0, 1fr); }
+  #lotes .accion { align-items: flex-start; }
+}
+.alerta { font-weight: 600; white-space: nowrap; } /* 109: glifo + palabra, color de texto */

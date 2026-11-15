@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Historia Viva · Validar Pieza</title>
+  <link rel="stylesheet" href="/estaticos/validar.css">
+</head>
+<body>
+
+<header>
+  <h1>Historia Viva · Validar Pieza</h1>
+  <span class="persona" id="persona"></span>
+  <!-- Solo con RETIRAR_PIEZAS: RGC y, durante el interinato, el Administrador técnico. -->
+  <details class="acciones" id="acciones" hidden>
+    <summary>Acciones</summary>
+    <button type="button" id="quitar">Quitar del Acervo…</button>
+  </details>
+  <button type="button" id="salir">Salir a lista</button>
+</header>
+
+<main>
+<!-- Modo degradado: franja informativa, nunca roja. Nada se rompió (§6). -->
+<p class="franja" id="franja-degradado" role="alert" hidden>
+  El sistema de lectura automática no está disponible en este momento.
+  <span class="sigue">Podés seguir subiendo y validando piezas a mano.</span>
+  Lo que ya estaba procesado no se pierde.
+</p>
+
+<!-- La franja del interruptor (DEC-88): informa, no bloquea. Validar sigue. -->
+<p class="franja" id="franja-interruptor" role="status" hidden>
+  Procesamiento detenido: las Piezas nuevas quedan encoladas y se procesan al reanudarlo.
+  <span class="sigue">Podés seguir validando.</span>
+</p>
+
+<div class="centro" id="fallo" hidden>
+  <div class="tarjeta">
+    <h2 id="fallo-titulo">No se pudo abrir la Ficha</h2>
+    <p id="fallo-detalle" role="alert"></p>
+    <button type="button" id="volver-fallo">Salir a lista</button>
+  </div>
+</div>
+
+<div id="partida" hidden>
+
+  <!-- ── Panel izquierdo: el original, solo lectura ───────────────────────── -->
+  <section class="panel" id="panel-original" aria-label="Original">
+    <h2>Original</h2>
+    <div class="controles-zoom">
+      <button type="button" id="zoom-menos" aria-label="Alejar">−</button>
+      <span class="nivel" id="nivel-zoom" aria-live="polite">100%</span>
+      <button type="button" id="zoom-mas" aria-label="Acercar">+</button>
+      <button type="button" id="zoom-ajustar">Ajustar al ancho</button>
+    </div>
+    <div id="visor"></div>
+    <p class="pie-original">
+      <span class="archivo">📎 <span id="nombre-archivo"></span></span><br>
+      <a id="enlace-original" href="#" target="_blank" rel="noopener">Abrir en pestaña nueva</a>
+    </p>
+  </section>
+
+  <div class="divisor" id="divisor" role="separator" aria-orientation="vertical"
+       aria-label="Proporción entre el original y la Ficha" tabindex="0"
+       aria-valuemin="30" aria-valuemax="70" aria-valuenow="45"></div>
+
+  <!-- ── Panel derecho: la Ficha ──────────────────────────────────────────── -->
+  <section class="panel" id="panel-ficha" aria-label="Ficha propuesta">
+    <h2><span id="titulo-ficha">Ficha propuesta</span> <span class="badge" id="badge"></span></h2>
+
+    <div id="ficha-scroll">
+      <!-- Contenido sospechoso (109, ADR-0003): avisa y no bloquea. Ocre en el borde, nunca
+           rojo; los extractos son texto no confiable y se pintan con `textContent`. -->
+      <section class="alerta-inyeccion" id="alerta-inyeccion"
+               aria-labelledby="alerta-inyeccion-titulo" hidden>
+        <h3 id="alerta-inyeccion-titulo">⚠ Alerta de contenido sospechoso</h3>
+        <p id="alerta-inyeccion-texto"></p>
+        <ul id="alerta-inyeccion-hallazgos"></ul>
+      </section>
+
+      <!-- Datos personales (125, C31): avisa y no bloquea; no se guarda. Solo aparece con los
+           controles encendidos. Dice dónde y qué, nunca repite el número. -->
+      <section class="alerta-inyeccion" id="aviso-datos-personales"
+               aria-labelledby="aviso-datos-personales-titulo" hidden>
+        <h3 id="aviso-datos-personales-titulo">⚠ Posibles datos personales</h3>
+        <p id="aviso-datos-personales-texto"></p>
+      </section>
+
+      <!-- «Ver la versión nueva» del modal M1: lo de la otra persona, solo lectura, al lado
+           de lo tuyo, que sigue editable. -->
+      <section id="version-nueva" aria-labelledby="version-nueva-titulo" hidden>
+        <h3 id="version-nueva-titulo"></h3>
+        <dl id="version-nueva-campos"></dl>
+      </section>
+
+      <!-- 152: con la Pieza Recibida se completan los campos duros y el Contexto mientras se lee;
+           no hay Ficha todavía, así que no se firma. -->
+      <p class="aviso-reapertura" id="aviso-en-lectura" role="status" hidden>
+        <strong>⏳ Recibida: el sistema todavía está leyendo el original.</strong> Ya podés
+        completar los campos y el Contexto. El cuerpo y el resumen aparecen cuando termine, sin
+        pisar lo que escribas.
+      </p>
+      <p class="aviso-reapertura" id="aviso-reapertura" hidden>
+        Retomando una Ficha Incompleta. Guardaste esto antes; seguí donde lo dejaste.
+      </p>
+      <!-- DEC-139: lo firmado con una sesión `dev` no viaja al servidor de la universidad. -->
+      <p class="aviso-reapertura" id="marca-ensayo" hidden>
+        <strong>Firma de ensayo, identidad no verificada.</strong>
+      </p>
+      <p class="aviso-reapertura" id="aviso-borrador" hidden>
+        Se te cerró la sesión mientras editabas: esto es lo que tenías sin guardar.
+      </p>
+      <p class="aviso-reapertura" id="aviso-analisis-humano" hidden>
+        <strong>Requiere análisis humano.</strong> Ningún modelo leyó este archivo: miralo y
+        escribí la descripción, el resumen y el Contexto.
+      </p>
+      <!-- Historia 110: informativo, no reserva la Pieza (DEC-24); vence a los 30 min. -->
+      <p class="aviso-reapertura" id="aviso-abierta-por" role="status" hidden></p>
+
+      <!-- US 16: lo primero que se lee al abrir, no recién al guardar. -->
+      <div id="faltantes" role="status"></div>
+
+      <!-- 155, ADR-0007: la descripción de una foto llega como Afirmaciones. Cada una se acepta o
+           se rechaza con un clic y solo las aceptadas entran al cuerpo al firmar. Los ítems los
+           arma `validar.js` con `textContent`: el texto lo escribió un modelo. -->
+      <section class="bloque" id="bloque-afirmaciones" aria-labelledby="afirmaciones-titulo" hidden>
+        <h3 id="afirmaciones-titulo">🤖 Afirmaciones de la imagen</h3>
+        <div class="caja" id="campo-afirmaciones">
+          <p class="ayuda" id="ayuda-afirmaciones"></p>
+          <p class="aviso-reapertura" id="aviso-descripcion-fallida" hidden></p>
+          <!-- 147: sin modificadores ni `role="application"`, para no pisar al navegador ni al
+               lector de pantalla (el porqué, en `validar.js`). -->
+          <details class="atajos" id="atajos-afirmaciones" hidden>
+            <summary>Atajos del teclado</summary>
+            <p class="ayuda">Con el foco en una Afirmación o en sus botones: A la acepta · R la rechaza ·
+              ↓ o J pasa a la siguiente · ↑ o K vuelve a la anterior (primero las de la foto, después las
+              de cada imagen embebida). Enter, con el foco en la
+              Afirmación, firma la Ficha y abre la siguiente Pieza Pendiente; si falta algo, dice qué.
+              Aceptar con A pide la misma confirmación que el botón. Mientras escribís en un campo,
+              las teclas escriben. Con un lector de pantalla en modo exploración, las letras y las
+              flechas son del lector: decidí con los botones o pasá al modo foco.</p>
+          </details>
+          <!-- 145: lo sin respaldo en la lectura automática va primero; lo respaldado se acepta en
+               bloque, nunca lo otro. -->
+          <div id="lista-afirmaciones">
+            <section class="grupo-afirmaciones" id="grupo-sin-respaldo" aria-labelledby="titulo-sin-respaldo" hidden>
+              <h4 id="titulo-sin-respaldo"></h4>
+              <p class="ayuda" id="ayuda-sin-respaldo">Lo que dicen no está en el texto que leyó la
+                lectura automática, o no tienen un nombre, una sigla, un número o una fecha que se
+                pueda leer: miralas contra el original.</p>
+              <ol class="afirmaciones" id="afirmaciones-sin-respaldo"></ol>
+            </section>
+            <section class="grupo-afirmaciones" id="grupo-respaldadas" aria-labelledby="titulo-respaldadas" hidden>
+              <h4 id="titulo-respaldadas" tabindex="-1"></h4>
+              <p class="ayuda" id="ayuda-respaldadas">Sus nombres, siglas, números y fechas están
+                en el texto que leyó la lectura automática. Pasá el mouse o el foco por una para ver
+                dónde, marcado sobre la imagen completa.</p>
+              <button type="button" id="aceptar-respaldadas" hidden></button>
+              <ol class="afirmaciones" id="afirmaciones-respaldadas"></ol>
+            </section>
+          </div>
+          <!-- 148: las imágenes embebidas sin texto de un documento, cada una con sus Afirmaciones. -->
+          <div id="imagenes-embebidas"></div>
+        </div>
+      </section>
+
+      <div class="bloque">
+        <h3>Campos de la Ficha</h3>
+        <div class="caja">
+
+          <div class="campo" id="campo-tipo">
+            <label for="tipo">Tipo de Pieza *</label>
+            <select id="tipo">
+              <option value="">Sin definir</option>
+            </select>
+            <p class="ayuda">¿Qué clase de material es esta Pieza?</p>
+            <p class="marca" id="marca-tipo" hidden></p>
+          </div>
+
+          <div class="campo" id="campo-tipo-actividad">
+            <label for="tipo-actividad">Tipo de actividad *</label>
+            <select id="tipo-actividad">
+              <option value="">Sin definir</option>
+            </select>
+            <p class="ayuda">¿Qué actividad de la Facultad documenta? Si no es ninguna, elegí
+              «No es una actividad».</p>
+            <p class="marca" id="marca-tipo-actividad" hidden></p>
+          </div>
+
+          <div class="campo" id="campo-fecha">
+            <span class="rotulo" id="rotulo-fecha">Fecha *</span>
+            <!-- La precisión no se elige: sale de qué campos se completaron. Solo el año es
+                 todo ese año; mes y año, todo ese mes; con día, ese día. Con Hasta, el
+                 rango va del comienzo de Desde al final de Hasta (§3, D-P1). -->
+            <div class="control-fecha" role="group" aria-labelledby="rotulo-fecha"
+                 aria-describedby="ayuda-fecha">
+              <fieldset id="extremo-desde">
+                <legend>Desde</legend>
+                <div class="detalle-fecha">
+                  <div class="par par-dia">
+                    <label for="fecha-desde-dia">Día <span class="opcional">(opcional)</span></label>
+                    <input type="number" id="fecha-desde-dia" inputmode="numeric" min="1" max="31"
+                           step="1" aria-describedby="error-desde fecha-error">
+                  </div>
+                  <div class="par">
+                    <label for="fecha-desde-mes">Mes <span class="opcional">(opcional)</span></label>
+                    <select id="fecha-desde-mes" aria-describedby="error-desde fecha-error">
+                      <option value="">Sin mes</option>
+                    </select>
+                  </div>
+                  <div class="par">
+                    <label for="fecha-desde-anio">Año</label>
+                    <input type="number" id="fecha-desde-anio" inputmode="numeric" min="1800"
+                           step="1" aria-describedby="error-desde fecha-error">
+                  </div>
+                </div>
+                <p class="error" id="error-desde" aria-live="polite"></p>
+              </fieldset>
+
+              <fieldset id="extremo-hasta">
+                <legend>Hasta <span class="opcional">(opcional)</span></legend>
+                <div class="detalle-fecha">
+                  <div class="par par-dia">
+                    <label for="fecha-hasta-dia">Día <span class="opcional">(opcional)</span></label>
+                    <input type="number" id="fecha-hasta-dia" inputmode="numeric" min="1" max="31"
+                           step="1" aria-describedby="error-hasta fecha-error">
+                  </div>
+                  <div class="par">
+                    <label for="fecha-hasta-mes">Mes <span class="opcional">(opcional)</span></label>
+                    <select id="fecha-hasta-mes" aria-describedby="error-hasta fecha-error">
+                      <option value="">Sin mes</option>
+                    </select>
+                  </div>
+                  <div class="par">
+                    <label for="fecha-hasta-anio">Año</label>
+                    <input type="number" id="fecha-hasta-anio" inputmode="numeric" min="1800"
+                           step="1" aria-describedby="error-hasta fecha-error">
+                  </div>
+                </div>
+                <p class="error" id="error-hasta" aria-live="polite"></p>
+              </fieldset>
+
+              <!-- La línea que la persona reconoce como "lo que yo quise decir": nunca el
+                   rango técnico (§3). -->
+              <p id="fecha-confirmacion" class="vacia" aria-live="polite">Sin fecha declarada</p>
+              <p class="error" id="fecha-error" aria-live="polite"></p>
+            </div>
+            <p class="ayuda" id="ayuda-fecha">¿Cuándo pasó o se tomó esto? Completá lo que sepas:
+              solo el año, el mes y el año, o el día exacto. Si abarca un período, completá
+              también Hasta.</p>
+            <p class="ayuda pista" id="pista-fecha" hidden></p>
+            <p class="marca" id="marca-fecha" hidden></p>
+          </div>
+
+          <div class="campo" id="campo-origen">
+            <label for="origen">Origen *</label>
+            <input type="text" id="origen">
+            <p class="ayuda">¿De dónde viene esta Pieza? Un archivo, una dependencia, una persona.</p>
+            <p class="marca" id="marca-origen" hidden></p>
+          </div>
+
+          <div class="campo" id="campo-propietario">
+            <label for="propietario">Propietario *</label>
+            <input type="text" id="propietario">
+            <p class="ayuda">¿Quién custodia o aportó esta Pieza? La SEU, la Biblioteca, un donante.</p>
+            <p class="marca" id="marca-propietario" hidden></p>
+          </div>
+
+          <div class="campo" id="campo-autor">
+            <label for="autor">Autor</label>
+            <input type="text" id="autor" aria-describedby="ayuda-autor">
+            <label class="casilla"><input type="checkbox" id="autor-desconocido"> Desconocido</label>
+            <p class="ayuda" id="ayuda-autor">¿Quién produjo esta Pieza? Es opcional; si nadie lo
+              sabe, marcá «Desconocido».</p>
+          </div>
+
+          <div class="campo" id="campo-carreras">
+            <fieldset class="casillas" aria-describedby="ayuda-carreras">
+              <legend>Carreras</legend>
+              <div id="carreras"></div>
+            </fieldset>
+            <p class="ayuda" id="ayuda-carreras">Opcional: marcá las Carreras con las que tiene que
+              ver. Sirven para filtrar, no limitan quién la ve.</p>
+            <p class="marca" id="marca-carreras" hidden></p>
+          </div>
+
+          <div class="campo" id="campo-resumen">
+            <label for="resumen">Resumen *</label>
+            <div id="filete-resumen">
+              <textarea id="resumen" rows="3"></textarea>
+            </div>
+            <p class="ayuda">Un resumen breve para reconocer la Pieza sin leer todo el cuerpo.</p>
+            <p class="marca" id="marca-resumen" hidden></p>
+            <!-- 146: el resumen rehecho sin las Afirmaciones rechazadas. -->
+            <div class="aviso-resumen" id="aviso-resumen" role="status" hidden>
+              <p id="aviso-resumen-texto"></p>
+              <button type="button" id="usar-resumen-nuevo" hidden>Usar el resumen nuevo</button>
+              <button type="button" id="no-esperar-resumen" hidden>No esperar el resumen nuevo</button>
+            </div>
+          </div>
+
+          <!-- `publicable` (125): lo ve y lo cambia solo el RGC, con los controles de C31
+               encendidos. Destildado, la Pieza no sale por la API de Agentes. -->
+          <div class="campo" id="campo-publicable" hidden>
+            <label class="casilla">
+              <input type="checkbox" id="publicable" aria-describedby="ayuda-publicable">
+              Publicable para el Agente 1
+            </label>
+            <p class="ayuda" id="ayuda-publicable">Destildala si un pedido de datos personales
+              pide que no salga por la API de Agentes. Las personas la siguen viendo y buscando.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="bloque">
+        <h3>Cuerpo de la Ficha</h3>
+        <div class="caja">
+
+          <div class="campo zona-propuesta" id="campo-transcripcion">
+            <label for="transcripcion" id="rotulo-transcripcion">🤖 Transcripción</label>
+            <div id="filete-transcripcion">
+              <textarea id="transcripcion" rows="14"></textarea>
+            </div>
+            <p class="ayuda" id="ayuda-transcripcion">
+              Este es el texto que el sistema leyó del archivo. Corregí lo que esté mal.
+            </p>
+            <p class="marca" id="marca-transcripcion" hidden></p>
+            <!-- Video (DEC-13): sin descripción se firma igual, con el resumen como índice. -->
+            <p class="ayuda aviso-descripcion" id="sin-descripcion" hidden>
+              (i) Sin descripción, nadie va a poder encontrar este video buscando.
+            </p>
+            <nav class="marcas-de-tiempo" id="marcas-de-tiempo" aria-label="Marcas de tiempo" hidden>
+              <span>Ir a:</span>
+              <ul id="lista-marcas"></ul>
+            </nav>
+            <p class="solo-lectores" id="anuncio" aria-live="polite"></p>
+          </div>
+
+          <hr class="separador">
+
+          <!-- El Contexto no es un campo del frontmatter: viaja aparte del cuerpo y el
+               servidor lo guarda bajo "## Contexto" (CONTEXT.md, §1). Nunca viene propuesto. -->
+          <div class="campo" id="campo-contexto">
+            <label for="contexto">🖊 Contexto — solo vos lo sabés</label>
+            <div class="contexto-filete">
+              <textarea id="contexto" rows="6"></textarea>
+            </div>
+            <p class="ayuda">
+              ¿Qué sabés de esto que no está escrito en ningún lado? De qué evento es, quién
+              aparece, por qué importa.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="guardado">
+      <p class="error" id="error-guardado" role="alert" hidden></p>
+      <button type="button" id="reintentar" hidden>Reintentar</button>
+      <div class="botones">
+        <button type="button" id="guardar-parcial">Guardar como está</button>
+        <button type="button" id="guardar-completo" class="principal" aria-describedby="firma">Validar y firmar</button>
+      </div>
+      <p class="firma" id="firma" aria-live="polite">Se completa al guardar, con tu nombre y la fecha de hoy</p>
+    </div>
+  </section>
+</div>
+
+<div id="confirmacion" hidden>
+  <div class="centro">
+    <div class="tarjeta" role="alert">
+      <h2 class="icono" id="confirmacion-titulo"></h2>
+      <p id="confirmacion-cuerpo"></p>
+      <p class="detalle" id="confirmacion-detalle" hidden></p>
+      <div class="botones">
+        <button type="button" id="ver-ficha" hidden>Ver la Ficha firmada</button>
+        <button type="button" id="ir-a-la-siguiente" class="principal">Ir a la siguiente</button>
+      </div>
+    </div>
+  </div>
+</div>
+</main>
+
+<!-- M1. `Escape` cierra sin descartar nada; el foco arranca en la acción no destructiva. -->
+<dialog id="conflicto" aria-labelledby="conflicto-titulo">
+  <h2 id="conflicto-titulo">Otra persona guardó esta Ficha mientras la editabas</h2>
+  <!-- R11 E1: la otra persona no solo guardó, firmó. -->
+  <p id="conflicto-validada" hidden>
+    <strong id="conflicto-validada-texto"></strong>
+    <a href="#version-nueva" id="conflicto-ver-ficha">Ver la Ficha validada</a>
+  </p>
+  <p id="conflicto-quien"></p>
+  <table>
+    <thead>
+      <tr><th scope="col">Campo</th><th scope="col">Lo tuyo</th><th scope="col" id="conflicto-suyo"></th></tr>
+    </thead>
+    <tbody id="conflicto-diferencias"></tbody>
+  </table>
+  <div class="botones">
+    <button type="button" id="conflicto-ver" autofocus>Ver la versión nueva</button>
+    <button type="button" id="conflicto-aplicar" class="principal">Aplicar mis cambios sobre la nueva</button>
+    <button type="button" id="conflicto-descartar">Descartar los míos</button>
+  </div>
+</dialog>
+
+<!-- M2. Firmar con alerta: repite la alerta y nunca bloquea; el foco arranca en «Volver a
+     revisar», y `Escape` hace lo mismo. -->
+<dialog id="alerta-firma" aria-labelledby="alerta-firma-titulo">
+  <h2 id="alerta-firma-titulo">⚠ Esta Pieza tiene una alerta de contenido sospechoso</h2>
+  <p id="alerta-firma-texto"></p>
+  <ul id="alerta-firma-hallazgos"></ul>
+  <p>No se bloqueó nada. ¿Firmás igual?</p>
+  <div class="botones">
+    <button type="button" id="alerta-volver" autofocus>Volver a revisar</button>
+    <button type="button" id="alerta-firmar" class="principal">Firmar igual</button>
+  </div>
+</dialog>
+
+<!-- M3. Retirar no borra nada; «Cancelar» tiene el foco inicial. -->
+<dialog id="retiro" aria-labelledby="retiro-titulo">
+  <form id="retiro-form" novalidate>
+    <h2 id="retiro-titulo"></h2>
+    <ul>
+      <li>Deja de aparecer en la Conversación y en la API de Agentes.</li>
+      <li>No se borra nada: la Ficha y el original se conservan.</li>
+      <li>Se puede restaurar desde Administración › Retiradas.</li>
+    </ul>
+    <p id="retiro-procesando" hidden>Se cancela el procesamiento en curso.</p>
+    <label for="retiro-motivo">Motivo <span aria-hidden="true">*</span></label>
+    <textarea id="retiro-motivo" required minlength="5" maxlength="500" rows="3"
+              aria-describedby="retiro-ayuda"></textarea>
+    <p class="ayuda" id="retiro-ayuda">Escribí por qué la quitás (de 5 a 500 caracteres).</p>
+    <p class="error" id="retiro-error" role="alert" hidden></p>
+    <div class="botones">
+      <button type="button" id="retiro-cancelar" autofocus>Cancelar</button>
+      <button type="submit" id="retiro-confirmar" class="peligro" disabled>Quitar del Acervo</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/estaticos/rotulos.js"></script>
+<script src="/estaticos/validar.js"></script>
+</body>
+</html>

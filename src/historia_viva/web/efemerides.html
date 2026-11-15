@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Historia Viva — Efemérides</title>
+  <link rel="stylesheet" href="/estaticos/efemerides.css">
+</head>
+<body>
+<header class="encabezado">
+  <h1>Historia Viva — Efemérides</h1>
+  <span id="persona"></span>
+  <a class="enlace" href="/">Volver a Mis Piezas</a>
+</header>
+<p class="franja" id="franja-plantilla" hidden>Se usa una plantilla provisoria hasta que la SEU
+  entregue la institucional.</p>
+
+<main>
+  <!-- P8: lista y revisión. Quien solo consulta ve las Aprobadas, sin filtro de estado (R-05).
+       La pestaña Relatos (065) es la misma revisión sobre `/api/relatos`. -->
+  <nav class="pestanas" aria-label="Qué se revisa">
+    <button type="button" id="pestana-efemerides" aria-pressed="true">Efemérides</button>
+    <button type="button" id="pestana-relatos" aria-pressed="false">Relatos</button>
+  </nav>
+  <form class="region" id="filtros" aria-label="Filtros">
+    <fieldset id="filtro-estado" hidden>
+      <legend>Estado</legend>
+      <label><input type="radio" name="estado" value="Propuesta" checked> Propuestas</label>
+      <label><input type="radio" name="estado" value="Aprobada"> Aprobadas</label>
+      <label><input type="radio" name="estado" value="Descartada"> Descartadas</label>
+      <label><input type="radio" name="estado" value=""> Todas</label>
+    </fieldset>
+    <span id="filtro-fechas">
+      <label for="desde">Desde</label>
+      <input type="date" id="desde">
+      <label for="hasta">Hasta</label>
+      <input type="date" id="hasta">
+    </span>
+  </form>
+
+  <div class="revision">
+    <section class="region" id="lista" aria-labelledby="titulo-lista">
+      <h2 id="titulo-lista" tabindex="-1">Efemérides</h2>
+      <p class="aviso" id="estado-lista" role="status"></p>
+      <p class="error" id="error-lista" role="alert" hidden><span id="error-lista-texto">No pudimos
+        cargar las efemérides.</span> <button type="button" id="reintentar">Reintentar</button></p>
+      <ul id="efemerides"></ul>
+    </section>
+
+    <section class="region" id="detalle" aria-labelledby="titulo-detalle" hidden>
+      <h2 id="titulo-detalle" tabindex="-1"></h2>
+      <p id="estado-efemeride"></p>
+      <p class="aviso-ocre" id="aviso-inyeccion" hidden>Una Ficha fuente tiene una alerta de
+        contenido sospechoso. Leé el texto con cuidado antes de aprobar.</p>
+      <p class="aviso-ocre" id="aviso-retirada" hidden>Una Ficha fuente se retiró del Acervo o dejó
+        de estar Validada. Podés revisarla igual, pero aprobada no se entrega al Agente 1.</p>
+      <h3 id="titulo-texto">Texto</h3>
+      <textarea id="texto" class="texto" rows="8" aria-labelledby="titulo-texto"
+        aria-describedby="marca-edicion pendiente"></textarea>
+      <p class="aviso" id="marca-edicion"></p>
+      <p class="error" id="pendiente" role="status"></p>
+      <p class="aviso" id="nota-texto">Texto del modelo: verificá que no invente nada y que siga la
+        plantilla.</p>
+      <h3 id="titulo-fuentes">Fichas fuente</h3>
+      <ol id="fuentes"></ol>
+      <p class="aviso" id="estado-detalle" role="status"></p>
+      <p class="error" id="error-detalle" role="alert" hidden><span id="error-detalle-texto">No
+        pudimos cargar la efeméride.</span> <button type="button" id="reintentar-detalle">Reintentar</button></p>
+      <div class="acciones">
+        <button type="button" id="guardar" hidden>Guardar cambios</button>
+        <button type="button" class="principal" id="aprobar" hidden>Aprobar</button>
+        <button type="button" id="descartar" hidden>Descartar…</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Aprobar es una firma: el foco arranca en «Cancelar» y `Escape` cierra sin aprobar. -->
+  <dialog id="confirmar" aria-labelledby="titulo-confirmar" aria-describedby="texto-confirmar">
+    <h2 id="titulo-confirmar">¿Aprobar esta efeméride?</h2>
+    <p id="texto-confirmar"></p>
+    <p class="aviso-ocre" id="confirmar-ensayo" hidden>Entraste con el acceso de desarrollo: la
+      firma queda marcada como de ensayo.</p>
+    <p class="error" id="confirmar-error" role="alert" hidden><span id="confirmar-error-texto"></span>
+      <button type="button" id="actualizar" hidden>Actualizar</button></p>
+    <div class="acciones">
+      <button type="button" id="cancelar" autofocus>Cancelar</button>
+      <button type="button" class="principal" id="confirmar-aprobar">Aprobar</button>
+    </div>
+  </dialog>
+
+  <!-- Descartar es definitivo: el motivo es obligatorio y el foco arranca en él (062). -->
+  <dialog id="dialogo-descarte" aria-labelledby="titulo-descarte">
+    <h2 id="titulo-descarte">¿Descartar esta efeméride?</h2>
+    <p id="texto-descarte"></p>
+    <label for="motivo">Motivo (de 5 a 500 caracteres)</label>
+    <textarea id="motivo" class="texto" rows="3" minlength="5" maxlength="500" required></textarea>
+    <p class="error" id="descarte-error" role="alert" hidden></p>
+    <div class="acciones">
+      <button type="button" id="cancelar-descarte">Cancelar</button>
+      <button type="button" class="principal" id="confirmar-descarte">Descartar</button>
+    </div>
+  </dialog>
+
+  <!-- M1 adaptado: lo escrito sigue en el texto hasta que la persona elige. -->
+  <dialog id="conflicto" aria-labelledby="conflicto-titulo" aria-describedby="conflicto-texto">
+    <h2 id="conflicto-titulo">Otra persona modificó esta efeméride mientras la editabas</h2>
+    <p id="conflicto-texto"></p>
+    <div class="acciones">
+      <button type="button" class="principal" id="conflicto-aplicar" autofocus>Aplicar mis cambios sobre la nueva</button>
+      <button type="button" id="conflicto-descartar">Descartar los míos</button>
+    </div>
+  </dialog>
+</main>
+<script src="/estaticos/efemerides.js"></script>
+</body>
+</html>

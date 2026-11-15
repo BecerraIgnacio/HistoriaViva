@@ -1,0 +1,37 @@
+# Techo de RNF-03 (spec §2.1, historia 237, DEC-58, DEC-112): la pila recortada para medir si entra
+# en 8 GB y 4 vCPU, con `.wslconfig` en `memory=8GB` y `processors=4`. Se corre una vez antes de la
+# sesión; el procedimiento y la planilla del pico están en `docs/despliegue-en-la-pc.md`.
+#
+#   docker compose -f compose.yml -f compose.techo.yml up -d
+#   docker compose up -d        # al terminar: vuelve el reparto de 32 GB
+#
+# Los topes suman menos de 8 GiB: lo que falta hasta 8 es del núcleo de WSL y de Docker. Un
+# contenedor que pasa su tope muere (OOM) y eso es un resultado: queda anotado.
+services:
+  ollama:
+    environment:
+      OLLAMA_MAX_LOADED_MODELS: "1"
+    mem_limit: 4608m
+    cpus: 4
+
+  ollama-embeddings:
+    mem_limit: 1g
+
+  postgres:
+    command: ["postgres", "-c", "shared_buffers=256MB", "-c", "max_connections=40"]
+    mem_limit: 640m
+
+  web:
+    mem_limit: 512m
+
+  trabajador-procesamiento:
+    mem_limit: 512m
+
+  trabajador-indexacion:
+    mem_limit: 384m
+
+  trabajador-efemerides:
+    mem_limit: 192m
+
+  caddy:
+    mem_limit: 64m

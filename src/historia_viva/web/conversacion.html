@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Historia Viva — Conversación</title>
+  <link rel="stylesheet" href="/estaticos/conversacion.css">
+</head>
+<body>
+<header class="encabezado">
+  <h1>Historia Viva — Conversación</h1>
+  <span id="persona"></span>
+  <a class="enlace" href="/">Volver a Mis Piezas</a>
+</header>
+
+<!-- La conversación no se pausa (DEC-136): la franja solo informa. -->
+<p class="franja" id="franja-interruptor" role="status" hidden>
+  Procesamiento detenido: el material nuevo no entra en la búsqueda hasta que se reanude. La
+  conversación sigue funcionando.
+</p>
+<p class="error" id="error-sesion" role="alert" hidden></p>
+
+<main class="regiones">
+  <!-- Historial de conversaciones (las mías); en celular arranca plegado (134). -->
+  <aside class="region" id="region-historial" aria-labelledby="titulo-historial">
+    <h2 id="titulo-historial" tabindex="-1">Historial</h2>
+    <button type="button" id="nueva">Nueva conversación</button>
+    <details id="plegar-historial" open>
+      <summary>Mis conversaciones</summary>
+      <p class="error" id="error-historial" role="alert" hidden>No pudimos cargar tus conversaciones.
+        <button type="button" id="reintentar-historial">Reintentar</button></p>
+      <ul id="historial"></ul>
+      <button type="button" id="mas-historial" hidden>Mostrar más</button>
+      <p class="aviso" id="historial-vacio">Tus conversaciones aparecen acá a medida que las empezás.</p>
+    </details>
+  </aside>
+
+  <!-- El chat (134): el hilo de burbujas arriba y la caja de pregunta fija abajo. Las Fichas de
+       cada respuesta, con sus Citas, quedan en el bloque «n Fuentes» debajo de ella. -->
+  <section class="region" id="region-conversacion" aria-labelledby="titulo-conversacion">
+    <h2 id="titulo-conversacion" class="oculto">Conversación</h2>
+    <p class="franja" id="franja-indice" role="status" hidden>
+      El índice se está actualizando: puede faltar material. Probá de nuevo más tarde.
+    </p>
+    <p class="franja" id="franja-semantica" role="status" hidden>
+      Búsqueda semántica no disponible: las fuentes salen solo por los filtros de Fecha, sin redacción.
+    </p>
+    <!-- Con tabindex: la región con scroll se recorre con el teclado (axe, scrollable-region-focusable). -->
+    <div id="desplazable" role="region" aria-label="Hilo de la conversación" tabindex="0">
+      <p class="aviso" id="vacia">Preguntá lo que quieras saber del Acervo. Podés acotar por fecha,
+        tipo de Pieza, tipo de actividad y carrera con «Filtros».</p>
+      <ol id="hilo"></ol>
+    </div>
+
+    <form id="compositor">
+      <p class="aviso" id="estado" role="status"></p>
+      <p class="error" id="error-turno" role="alert" hidden></p>
+      <details id="filtros">
+        <summary id="resumen-filtros">Filtros</summary>
+        <p class="aviso">Se aplican a la próxima pregunta.</p>
+        <fieldset>
+          <legend>Fecha</legend>
+          <label for="desde">Desde</label>
+          <input type="date" id="desde">
+          <label for="hasta">Hasta</label>
+          <input type="date" id="hasta">
+        </fieldset>
+        <fieldset id="filtro-tipo"><legend>Tipo de Pieza</legend></fieldset>
+        <fieldset id="filtro-tipo_actividad"><legend>Tipo de actividad</legend></fieldset>
+        <fieldset id="filtro-carrera"><legend>Carrera</legend></fieldset>
+        <button type="button" id="quitar-filtros" hidden>Quitar filtros</button>
+      </details>
+      <div class="caja">
+        <label for="pregunta" class="oculto">Pregunta</label>
+        <textarea id="pregunta" maxlength="2000" rows="2" required
+          placeholder="Preguntá lo que quieras saber del Acervo"></textarea>
+        <button type="submit" class="principal" id="enviar">Enviar</button>
+        <button type="button" id="detener" hidden>Detener</button>
+      </div>
+      <div class="pie">
+        <details>
+          <summary>Atajos del teclado</summary>
+          <p class="aviso">Enter envía la pregunta · Mayús+Enter inserta un salto de línea · Esc detiene
+            la respuesta mientras se escribe.</p>
+        </details>
+        <button type="button" class="discreto" id="ir-historial">Ir al historial</button>
+        <button type="button" class="discreto" id="ir-fuentes">Ir a las fuentes</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<!-- «Proponer como relato» (DEC-147): la confirmación del recorrido R26. -->
+<dialog id="confirmar-relato" aria-labelledby="titulo-relato">
+  <h2 id="titulo-relato">¿Proponer esta respuesta como relato?</h2>
+  <p>Vas a proponer esta respuesta como relato. Las fuentes de la respuesta pasan a ser las
+    fuentes del relato. Nadie lo ve fuera de Historia Viva hasta que una persona lo apruebe.</p>
+  <form method="dialog" class="acciones">
+    <button type="submit" value="cancelar" autofocus>Cancelar</button>
+    <button type="submit" value="proponer" class="principal">Proponer</button>
+  </form>
+</dialog>
+<script src="/estaticos/conversacion.js"></script>
+</body>
+</html>

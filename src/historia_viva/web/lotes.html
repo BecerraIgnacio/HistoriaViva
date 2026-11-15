@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Historia Viva — Lotes</title>
+  <link rel="stylesheet" href="/estaticos/lote.css">
+</head>
+<body>
+<main>
+  <!-- P10 (085): los Lotes, con su estado derivado y la entrada a retomar uno. -->
+  <div class="encabezado">
+    <a class="enlace" href="/">Volver a Mis Piezas</a>
+    <h1>Lotes</h1>
+  </div>
+
+  <section>
+    <form id="filtros" class="filtros">
+      <fieldset>
+        <legend class="oculto">Qué Lotes</legend>
+        <label><input type="radio" name="quien" value="yo" checked> Mis Lotes</label>
+        <label><input type="radio" name="quien" value="todos"> Todos</label>
+      </fieldset>
+      <label for="estado">Estado</label>
+      <select id="estado">
+        <option value="">Todos</option>
+        <option>Vacío</option>
+        <option>Procesando</option>
+        <option>En validación</option>
+        <option>Validado</option>
+      </select>
+      <a class="boton" href="/#seccion-lote">+ Nuevo Lote</a>
+    </form>
+
+    <p class="aviso" id="cargando">Cargando los Lotes…</p>
+    <div id="error" hidden>
+      <p class="error">No pudimos cargar los Lotes.</p>
+      <button type="button" id="reintentar">Reintentar</button>
+    </div>
+    <p id="sin-lotes" hidden>Todavía no hay Lotes. <a class="boton" href="/#seccion-lote">+ Nuevo Lote</a></p>
+    <p id="sin-coincidencias" hidden>Ningún Lote coincide.
+      <button type="button" class="boton-secundario" id="quitar-filtros">Quitar filtros</button></p>
+    <ul id="lotes"></ul>
+    <button type="button" class="boton-secundario" id="mas" hidden>Ver más Lotes</button>
+    <p id="anuncio" class="oculto" role="status"></p>
+  </section>
+</main>
+
+<script src="/estaticos/piezas.js"></script>
+<script src="/estaticos/lotes.js"></script>
+</body>
+</html>

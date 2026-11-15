@@ -1,0 +1,5 @@
+# Los SQL de las migraciones entran en su checksum y el bootstrap corre en Linux: siempre LF.
+*.sql text eol=lf
+*.sh text eol=lf
+# axe-core minificado y copiado tal cual de npm (039): sin diff de texto.
+tests/axe/axe.min.js -diff

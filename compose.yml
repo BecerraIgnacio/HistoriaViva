@@ -1,0 +1,349 @@
+# Compose del MVP (historia 209, DEC-119): corre en la PC del alumno. Solo Caddy publica, y solo en
+# 127.0.0.1:80; los volúmenes son `hvmvp_*`, sin nada compartido con el Prototipo (historia 56).
+#
+#   cp .env.example .env        # y completar
+#   docker compose up -d --build
+#   curl http://localhost/api/salud
+name: historiaviva-mvp
+
+# Lo que comparten `web` y el trabajador.
+x-entorno: &entorno
+  HV_BD_URL: postgresql://hv_app:${HV_CLAVE_APP}@postgres:5432/historia_viva
+  # Los modelos salen de `configuracion_capacidad` (RF-32), no del entorno.
+  HV_MOTOR_URL: http://ollama:11434
+  HV_MOTOR_EMBEDDINGS_URL: http://ollama-embeddings:11434
+  # «Hoy» es el de Argentina: en UTC la ventana de efemérides corre un día entre las 21 y las 24.
+  TZ: America/Argentina/Buenos_Aires
+  # `servidor` en el de la universidad (runbook R16): sin `HV_ENTORNO` ni `dev`, y `web` solo con
+  # OIDC completo. La pone también `compose.servidor.yml`; en el `.env` cubre lo que corre sin el
+  # override (el `migrar` del respaldo).
+  HV_DESPLIEGUE: ${HV_DESPLIEGUE:-}
+
+# Rotación de los logs de cada servicio (spec §2.4): 5 archivos de 20 MB. La app escribe una línea
+# JSON por evento en stdout, sin contenido de Piezas ni preguntas (RNF-19, `composicion.registro`).
+x-registro: &registro
+  driver: local
+  options:
+    max-size: 20m
+    max-file: "5"
+
+# Endurecimiento (165): ningún proceso gana privilegios con `setuid` (`no-new-privileges`), y los
+# contenedores de la app, que corren como uid 1000, no tienen ninguna capability (`cap_drop`).
+# Postgres, Ollama y Caddy conservan las suyas: su entrypoint las usa y acá no se probó sin ellas.
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.7-pg17@sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d
+    security_opt: [no-new-privileges:true]
+    command: ["postgres", "-c", "shared_buffers=512MB", "-c", "max_connections=40"]
+    # Solo en `base`, sin salida a Internet; la alcanzan los servicios de la app.
+    networks: [base]
+    environment:
+      POSTGRES_USER: historia
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: historia_viva
+      HV_CLAVE_MIGRADOR: ${HV_CLAVE_MIGRADOR:?Falta HV_CLAVE_MIGRADOR en .env}
+      HV_CLAVE_APP: ${HV_CLAVE_APP:?Falta HV_CLAVE_APP en .env}
+    volumes:
+      - hvmvp_pgdata:/var/lib/postgresql/data
+      # El bootstrap con superusuario: la imagen lo corre una sola vez, sobre un volumen nuevo.
+      - ./db/bootstrap.sh:/docker-entrypoint-initdb.d/hv_bootstrap.sh:ro
+      - ./db/bootstrap.sql:/hv/bootstrap.sql:ro
+    # Por TCP: mientras corre el bootstrap la imagen solo escucha en el socket, y `migrar` no
+    # tiene que arrancar antes de que termine.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U historia -d historia_viva"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    mem_limit: 2g
+    restart: unless-stopped
+    logging: *registro
+
+  # `web` no procesa: la cola la consume `trabajador-procesamiento`, otro proceso (historia 50).
+  # Arrancar no cambia el esquema: eso es de `migrar`.
+  web:
+    build: &imagen
+      context: .
+      args:
+        IMAGEN_PYTHON: ${IMAGEN_PYTHON:-python:3.12.16-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b}
+    image: historiaviva-mvp-app
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    networks: [default, base]
+    environment:
+      <<: *entorno
+      # Vacías: OIDC, producción y `http://localhost` (spec §2.9). En la PC, `.env` trae
+      # `HV_AUTH=dev` y `HV_ENTORNO=desarrollo`.
+      HV_AUTH: ${HV_AUTH:-}
+      HV_ENTORNO: ${HV_ENTORNO:-}
+      HV_ORIGEN: ${HV_ORIGEN:-}
+      # Los de `dc run --rm web alta-persona` (runbook R3); vacía es el de la FIE.
+      HV_DOMINIOS_PERMITIDOS: ${HV_DOMINIOS_PERMITIDOS:-}
+      # Lo que llega del socket de Caddy cuenta como hecho en la PC para `/auth/dev`: Caddy se
+      # publica solo en 127.0.0.1:80, y con Docker no ve el loopback del pedido.
+      HV_PROXY: caddy
+      # Ingreso con Google (036). Sin cliente no hay `/auth/google`; lo entrega IT (C18, 127).
+      # La URI de retorno es `<HV_URL_PUBLICA>/auth/callback`.
+      HV_URL_PUBLICA: ${HV_URL_PUBLICA:-}
+      HV_OIDC_CLIENTE_ID: ${HV_OIDC_CLIENTE_ID:-}
+      HV_OIDC_SECRETO: ${HV_OIDC_SECRETO:-}
+      HV_OIDC_EMISOR: ${HV_OIDC_EMISOR:-}
+      HV_CLAVE_COOKIE_PREVIA: ${HV_CLAVE_COOKIE_PREVIA:-}
+      # Cupos por token de /v1 (098, DEC-113); vacías: 60, 10 y 2.
+      HV_CUPO_CONSULTAS_MIN: ${HV_CUPO_CONSULTAS_MIN:-}
+      HV_CUPO_APORTES_MIN: ${HV_CUPO_APORTES_MIN:-}
+      HV_CUPO_BUSQUEDAS_EN_VUELO: ${HV_CUPO_BUSQUEDAS_EN_VUELO:-}
+      HV_CUPO_BUSQUEDAS_MIN: ${HV_CUPO_BUSQUEDAS_MIN:-}
+      # Similitud mínima de una Fuente (133); vacía: 0.42, calibrado con bge-m3.
+      HV_UMBRAL_SIMILITUD: ${HV_UMBRAL_SIMILITUD:-}
+      # Aprobación en bloque (108): vacía es `false` hasta que la SEU acepte C29 (R-28).
+      HV_BLOQUE_HABILITADO: ${HV_BLOQUE_HABILITADO:-}
+      # Controles de datos personales (125): vacía es `false` hasta C31.
+      HV_DATOS_PERSONALES_HABILITADOS: ${HV_DATOS_PERSONALES_HABILITADOS:-}
+      # La nota «Banco: ganador … · mejor no chino …» de la pantalla de modelos (110) sale de
+      # `/referencia/corridas`. Sin `HV_REFERENCIA` en el `.env`, vacía: ninguna nota.
+      HV_REFERENCIA: ${HV_REFERENCIA:+/referencia}
+    volumes:
+      - ${HV_ORIGINALES:?Falta HV_ORIGINALES en .env}:/data/originales
+      # El manual de `/ayuda` y los runbooks que enlaza (118), del clon, de solo lectura.
+      - ./docs:/app/docs:ro
+      # La referencia del banco, de solo lectura. Sin la carpeta, un volumen vacío.
+      - ${HV_REFERENCIA:-hvmvp_sin_referencia}:/referencia:ro
+    # `modelos` baja en paralelo (spec §2.1, orden de arranque): no se lo espera.
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrar:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/salud', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    mem_limit: 1500m
+    restart: unless-stopped
+    logging: *registro
+
+  # Una vez por arranque: las migraciones que falten, como `hv_migrador`, el único que conoce su
+  # clave. Los roles los dejó el bootstrap de `postgres`. La base nace sin personas (DEC-52): con
+  # `HV_ENTORNO=desarrollo` en `.env`, `migrar` siembra una persona de prueba por rol (DEC-124).
+  migrar:
+    build: *imagen
+    image: historiaviva-mvp-app
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    command: ["migrar"]
+    networks: [base]
+    environment:
+      HV_BD_URL_MIGRADOR: postgresql://hv_migrador:${HV_CLAVE_MIGRADOR}@postgres:5432/historia_viva
+      HV_ENTORNO: ${HV_ENTORNO:-}
+      # En el servidor, `HV_ENTORNO` presente aborta: no se siembran personas de prueba (R16).
+      HV_DESPLIEGUE: ${HV_DESPLIEGUE:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    logging: *registro
+
+  # Consume la cola de procesamiento; reiniciar `web` no corta un trabajo (historia 50).
+  trabajador-procesamiento:
+    build: *imagen
+    image: historiaviva-mvp-app
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    command: ["trabajador", "--tipos", "procesamiento"]
+    networks: [default, base]
+    environment:
+      <<: *entorno
+      # La réplica de originales a Drive (124) corre acá, donde están montados. Vacía: apagada.
+      # Encendida sin la clave montada no arranca; la clave es un archivo, nunca una variable.
+      HV_DRIVE: ${HV_DRIVE:-}
+      HV_DRIVE_CLAVE: /run/secrets/drive_sa.json
+      HV_DRIVE_UNIDAD: ${HV_DRIVE_UNIDAD:-}
+      HV_DRIVE_CARPETA: ${HV_DRIVE_CARPETA:-}
+    volumes:
+      - ${HV_ORIGINALES:?Falta HV_ORIGINALES en .env}:/data/originales
+      # Con Drive real (126): la clave de la cuenta de servicio, de solo lectura y fuera del repo.
+      # - ${HV_DRIVE_CLAVE_HOST}:/run/secrets/drive_sa.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrar:
+        condition: service_completed_successfully
+    # Más que los 30 s que el trabajador espera al trabajo en curso (`_ESPERA_AL_DETENER_S`): con
+    # los 10 s por defecto, `docker stop` lo mata y el trabajo queda `en_curso` hasta que vence
+    # su arriendo.
+    stop_grace_period: 40s
+    mem_limit: 2g
+    restart: unless-stopped
+    logging: *registro
+
+  # Indexa las Piezas Validadas contra `ollama-embeddings`: una Validada no espera detrás de la
+  # descripción de una foto (DEC-08). Lee la Ficha de la base: no monta los originales.
+  trabajador-indexacion:
+    build: *imagen
+    image: historiaviva-mvp-app
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    command: ["trabajador", "--tipos", "indexacion"]
+    networks: [default, base]
+    environment: *entorno
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrar:
+        condition: service_completed_successfully
+    stop_grace_period: 40s
+    mem_limit: 700m
+    restart: unless-stopped
+    logging: *registro
+
+  # El planificador de efemérides (R-08): no toma de la cola; atiende «Generar ahora» con un
+  # candado consultivo, así una segunda instancia no genera lo mismo. Redacta con `ollama`.
+  trabajador-efemerides:
+    build: *imagen
+    image: historiaviva-mvp-app
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    command: ["trabajador", "--tipos", "efemeride"]
+    networks: [default, base]
+    environment: *entorno
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrar:
+        condition: service_completed_successfully
+    stop_grace_period: 40s
+    mem_limit: 700m
+    restart: unless-stopped
+    logging: *registro
+
+  ollama:
+    image: ollama/ollama:0.40.2@sha256:b86366bb528bbf7f1424435d165028497a5b69bf6ddb4fa5a87102e2b79f44fb
+    security_opt: [no-new-privileges:true]
+    environment:
+      # El runbook R10 la baja a 1 desde el `.env` si `ollama` muere por memoria.
+      OLLAMA_MAX_LOADED_MODELS: ${OLLAMA_MAX_LOADED_MODELS:-2}
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_KEEP_ALIVE: "5m"
+      # Sin los modelos «cloud» de ollama.com, que corren fuera de la PC (RNF-02, S-MOD-05).
+      OLLAMA_NO_CLOUD: "1"
+    volumes:
+      - hvmvp_modelos:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    mem_limit: 7g
+    restart: unless-stopped
+    logging: *registro
+
+  # El modelo de `embeber`, siempre cargado y aparte del de generación (DEC-06): una consulta no
+  # espera detrás de una foto ni de una recarga, y un OOM de la visión no tumba la búsqueda.
+  # Lee los modelos que baja `modelos` por `ollama`; sin escribir el volumen ni podarlo al
+  # arrancar (la poda borraría una descarga en curso del otro). Arranca después de `ollama`, que
+  # deja creada la clave del servidor en el volumen.
+  ollama-embeddings:
+    image: ollama/ollama:0.40.2@sha256:b86366bb528bbf7f1424435d165028497a5b69bf6ddb4fa5a87102e2b79f44fb
+    security_opt: [no-new-privileges:true]
+    environment:
+      OLLAMA_KEEP_ALIVE: "-1"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_NOPRUNE: "1"
+      OLLAMA_NO_CLOUD: "1"
+    volumes:
+      - hvmvp_modelos:/root/.ollama:ro
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    mem_limit: 1500m
+    restart: unless-stopped
+    logging: *registro
+
+  # Corre una vez por arranque: baja los modelos de la configuración vigente que falten en
+  # `ollama`, también el de `embeber`: el volumen es el mismo (los nombres viven solo en
+  # `configuracion_capacidad`, RF-32). Un modelo que se cambia
+  # con la app en marcha se baja con `docker compose run --rm modelos`; la salud avisa mientras
+  # falte.
+  modelos:
+    build: *imagen
+    image: historiaviva-mvp-app
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    command: ["modelos"]
+    networks: [default, base]
+    environment:
+      HV_BD_URL: postgresql://hv_app:${HV_CLAVE_APP}@postgres:5432/historia_viva
+      HV_MOTOR_URL: http://ollama:11434
+    depends_on:
+      migrar:
+        condition: service_completed_successfully
+      ollama:
+        condition: service_healthy
+    restart: "no"
+    logging: *registro
+
+  # El banco de pruebas (DEC-132, runbook R8), fuera del `up` normal y con la pila arriba:
+  # `docker compose run --rm banco comparar --capacidad resumir …`. Lee la referencia y escribe
+  # solo en `corridas`. Sin `HV_REFERENCIA` en el `.env` monta el volumen vacío y dice qué falta.
+  banco:
+    build: *imagen
+    image: historiaviva-mvp-app
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    profiles: [banco]
+    entrypoint: [python, -m, historia_viva.composicion, banco]
+    networks: [default, base]
+    environment:
+      <<: *entorno
+      HV_REFERENCIA: ${HV_REFERENCIA:+/referencia}
+    volumes:
+      # Sin la carpeta, de escritura: en un volumen vacío de solo lectura no se puede crear el
+      # punto de montaje de `corridas` y el contenedor no llegaría a decir qué falta.
+      - ${HV_REFERENCIA:-hvmvp_sin_referencia}:/referencia${HV_REFERENCIA:+:ro}
+      # Con la carpeta, `<carpeta>/corridas`; sin ella, el mismo volumen vacío.
+      - ${HV_REFERENCIA:-hvmvp_sin_referencia}${HV_REFERENCIA:+/corridas}:/referencia/corridas
+    restart: "no"
+    logging: *registro
+
+  # Único servicio con puerto, y solo en loopback: nada se publica en la red (DEC-119, R-35).
+  caddy:
+    image: caddy:2.11-alpine@sha256:78bd35025c7ba85961dd149ae670315129954e77abe2383ac47c89106b35ade9
+    security_opt: [no-new-privileges:true]
+    ports:
+      - "127.0.0.1:80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - hvmvp_caddy:/data
+    depends_on:
+      - web
+    mem_limit: 200m
+    restart: unless-stopped
+    logging: *registro
+
+# `base` es `internal` (167, matriz del laboratorio): sin salida a Internet ni puertos publicados.
+# Solo `postgres` vive únicamente ahí; los demás servicios de la app están también en `default`
+# porque hablan con Ollama, con Caddy o con Google y Drive. Los dos Ollama siguen en `default`:
+# `ollama` necesita salida para que `modelos` baje lo que falta, y separarlos queda previsto.
+networks:
+  base:
+    internal: true
+
+# `name:` fija el nombre real: sin él, compose antepone el del proyecto (`historiaviva-mvp_…`).
+volumes:
+  hvmvp_pgdata:
+    name: hvmvp_pgdata
+  hvmvp_modelos:
+    name: hvmvp_modelos
+  hvmvp_caddy:
+    name: hvmvp_caddy
+  # El de `web` y `banco` sin `HV_REFERENCIA`: vacío, y nadie escribe en él.
+  hvmvp_sin_referencia:
+    name: hvmvp_sin_referencia

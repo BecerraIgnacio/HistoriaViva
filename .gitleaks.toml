@@ -1,0 +1,32 @@
+# Escaneo de secretos (RNF-14, historia 222): reglas por defecto de gitleaks más la del Token de Agente.
+# Resultado y decisiones: docs/mediciones/gitleaks.md.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "token-de-agente"
+description = "Token de Agente de Historia Viva: hv_<prefijo de 8 hex>_<secreto>"
+regex = '''\bhv_[0-9a-f]{8}_[A-Za-z0-9_-]{20,}'''
+keywords = ["hv_"]
+
+[[allowlists]]
+description = "Valores de ejemplo de la documentación del contrato con el Agente 1, inventados"
+regexTarget = "secret"
+regexes = [
+  '''^3f1c9a12-7f0b-4a2e-9a7d-0c5b6e2f1d44$''',  # Idempotency-Key de ejemplo
+  '''^1c5e7a93-8b24-4d60-a1f3-c5e7a9b1d3f5$''',  # token_id de ejemplo
+  '''^8e2a4c60-9d13-4b57-a8f2-1c3e5a7b9d04$''',  # token_id de ejemplo
+  '''^hv_3fa91c2e_Qm4xT7vB2nKpL9wRzYc5HjD8sGfA1eUoXiNk3Pb6Vtx$''',  # token de ejemplo
+  '''^hv_b27d40e9_Zr8cV3mN5qTxK1jWyH6pLaD4sGfB9eUoXiCk2Pn7Qtx$''',  # token de ejemplo
+  # `.env.example` deja las claves vacías: la regla genérica toma el nombre de la variable siguiente.
+  '''^HV_[A-Z_]+=$''',
+]
+
+[[allowlists]]
+description = "Lo que no se versiona: entorno virtual, dependencias de Node y bytecode (solo para `gitleaks dir`)"
+paths = [
+  '''(^|/)\.venv/''',
+  '''(^|/)node_modules/''',
+  '''(^|/)__pycache__/''',
+]

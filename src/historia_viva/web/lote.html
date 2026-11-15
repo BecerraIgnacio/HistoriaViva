@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Historia Viva — Detalle del Lote</title>
+  <link rel="stylesheet" href="/estaticos/lote.css">
+</head>
+<body>
+<main>
+  <!-- P4 (084): el Lote, su progreso derivado de las Piezas y la acción de cada fila. -->
+  <div class="encabezado">
+    <a class="enlace" href="/">Volver a Mis Piezas</a>
+    <h1 id="titulo">Detalle del Lote</h1>
+  </div>
+
+  <p class="franja" id="franja-degradado" role="status" hidden>
+    El sistema de lectura automática no está disponible en este momento: las Piezas Recibidas
+    esperan al motor. Podés seguir validando las que ya tienen Ficha.
+  </p>
+  <p class="franja" id="franja-interruptor" role="status" hidden>
+    Procesamiento detenido: las Piezas Recibidas esperan y se procesan al reanudarlo.
+    Podés seguir validando.
+  </p>
+
+  <p class="aviso" id="cargando">Cargando el Lote…</p>
+
+  <section id="error" hidden>
+    <p class="error" id="texto-error">No pudimos cargar el Lote.</p>
+    <button type="button" id="reintentar-carga">Reintentar</button>
+  </section>
+
+  <section id="lote" hidden>
+    <p class="aviso" id="contexto"></p>
+    <p>Estado del Lote: <strong id="estado-lote"></strong></p>
+    <a class="boton" id="cargar-mas" hidden>Cargar más archivos</a>
+    <p id="vacio" hidden>Este Lote todavía no tiene archivos.
+      <a class="enlace" id="cargar-archivos">Cargar archivos</a></p>
+    <div id="progreso" hidden>
+      <p id="conteos"></p>
+      <progress id="barra" max="1" value="0" aria-labelledby="texto-barra"></progress>
+      <span id="texto-barra"></span>
+      <p class="aviso" id="aparte"></p>
+      <p id="espera" hidden></p>
+      <p class="aviso" id="parcial" hidden></p>
+    </div>
+    <p id="anuncio" role="status"></p>
+    <!-- 151: el Lote armado al arrastrar varios archivos pide su Contexto mientras se procesa. Con
+         Piezas solo se completa lo vacío (historia 74). -->
+    <form id="completar" novalidate hidden>
+      <h2>Completar el Lote</h2>
+      <p class="aviso">Lo que completes se copia a las Piezas Recibidas y Pendientes que no lo
+        tienen; las Incompletas y las Validadas no cambian. Lo que el Lote ya tiene no se cambia.</p>
+      <p class="aviso" id="completar-tarde">Las Piezas que ya se están leyendo se resumen sin
+        este Contexto: su resumen no lo usa, pero el dato igual llega a su Ficha.</p>
+      <div class="campos">
+        <label for="completar-nombre">Nombre</label><input id="completar-nombre">
+        <label for="completar-origen" data-campo="origen">Origen</label>
+        <input id="completar-origen" data-campo="origen">
+        <label for="completar-precision" data-campo="fecha_inicio">Fecha</label>
+        <select id="completar-precision" data-campo="fecha_inicio">
+          <option value="anio">Un año</option>
+          <option value="decada">Una década</option>
+          <option value="mes">Un mes</option>
+          <option value="dia">Un día</option>
+          <option value="rango">Entre dos fechas</option>
+        </select>
+        <label for="completar-desde" data-campo="fecha_inicio">Desde</label>
+        <input type="date" id="completar-desde" data-campo="fecha_inicio">
+        <label for="completar-hasta" id="rotulo-completar-hasta" hidden>Hasta</label>
+        <input type="date" id="completar-hasta" hidden>
+        <label for="completar-propietario" data-campo="propietario">Propietario</label>
+        <input id="completar-propietario" data-campo="propietario">
+      </div>
+      <button type="submit" class="boton">Guardar en el Lote</button>
+      <p id="completar-resultado" role="status"></p>
+    </form>
+    <h2>Piezas del Lote</h2>
+    <ul id="piezas"></ul>
+  </section>
+
+  <!-- 108 (CU-07): construida y deshabilitada hasta que la SEU acepte C29 (R-28). -->
+  <section id="bloque" aria-labelledby="titulo-bloque" hidden>
+    <h2 id="titulo-bloque">Aprobación en bloque</h2>
+    <p id="bloque-deshabilitado" hidden>Deshabilitada hasta que la SEU acepte firmar sin abrir
+      cada Pieza (C29). Mientras tanto, validá de a una.</p>
+    <div id="bloque-habilitado" hidden>
+      <p class="aviso">Firma Pendientes de una misma clase sin abrirlas. Origen, Fecha,
+        propietario y carreras vienen del Lote; el bloque pone solo lo de abajo.</p>
+      <dl class="heredados" id="bloque-heredados"></dl>
+      <div class="campos">
+        <label for="bloque-clase">Clase</label>
+        <select id="bloque-clase">
+          <option value="documento">Documentos</option>
+          <option value="imagen">Imágenes</option>
+          <option value="planilla">Planillas</option>
+          <option value="texto">Textos</option>
+        </select>
+        <label for="bloque-tipo">Tipo de Pieza</label>
+        <select id="bloque-tipo"><option value="">Elegí uno</option></select>
+        <label for="bloque-actividad">Tipo de actividad</label>
+        <select id="bloque-actividad"><option value="">Elegí uno</option></select>
+        <label for="bloque-contexto">Contexto adicional (opcional)</label>
+        <!-- Una línea: el borde HTTP normaliza los saltos (R-36). -->
+        <input type="text" id="bloque-contexto">
+      </div>
+      <button type="button" id="bloque-previa">Ver qué se puede aprobar</button>
+      <div id="bloque-lista" hidden>
+        <button type="button" id="bloque-todas">Marcar todas las que se pueden aprobar</button>
+        <ul id="bloque-piezas"></ul>
+        <p class="aviso" id="bloque-afuera"></p>
+        <button type="button" class="boton" id="bloque-aprobar" disabled>Aprobar en bloque (0)</button>
+      </div>
+      <p id="bloque-resultado" role="status"></p>
+    </div>
+  </section>
+</main>
+
+<dialog id="bloque-confirmar" aria-labelledby="bloque-aviso">
+  <p id="bloque-aviso"></p>
+  <p class="aviso">Quedan firmadas a tu nombre, con el tipo y el tipo de actividad elegidos.</p>
+  <button type="button" class="boton" id="bloque-firmar"></button>
+  <button type="button" id="bloque-cancelar">Cancelar</button>
+</dialog>
+
+<script src="/estaticos/piezas.js"></script>
+<script src="/estaticos/lote.js"></script>
+</body>
+</html>
