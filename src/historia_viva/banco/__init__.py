@@ -11,6 +11,7 @@ import math
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -42,6 +43,7 @@ __all__ = [
     "percentil",
     "porcentaje",
     "recall_en_k",
+    "rutas_libres",
 ]
 
 OBJETIVO_M1 = 0.80
@@ -96,6 +98,19 @@ def percentil(valores: Sequence[float], p: float) -> float | None:
     abajo = math.floor(rango)
     arriba = min(abajo + 1, len(ordenados) - 1)
     return ordenados[abajo] + (ordenados[arriba] - ordenados[abajo]) * (rango - abajo)
+
+
+def rutas_libres(
+    directorio: Path, nombre: str, extensiones: Sequence[str] = ("json", "csv", "md")
+) -> list[Path]:
+    """Las rutas `nombre.<extensión>` de una corrida en `directorio`. Si otra corrida del mismo
+    segundo ya las ocupa, `nombre_2`, `nombre_3`…: no la pisa y ordena después de ella (168)."""
+    # shortcut: `_10` ordena antes que `_2`; diez corridas en el mismo segundo no pasan.
+    libre, n = nombre, 1
+    while any((directorio / f"{libre}.{e}").exists() for e in extensiones):
+        n += 1
+        libre = f"{nombre}_{n}"
+    return [directorio / f"{libre}.{e}" for e in extensiones]
 
 
 def porcentaje(valor: float | None) -> str:

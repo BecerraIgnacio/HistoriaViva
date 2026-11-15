@@ -32,7 +32,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
-from historia_viva.banco import celda_md, fila_md, percentil, porcentaje
+from historia_viva.banco import celda_md, fila_md, percentil, porcentaje, rutas_libres
 from historia_viva.banco.referencia import (
     ConjuntoDeReferencia,
     ConsultaDeReferencia,
@@ -738,7 +738,7 @@ def escribir_comparacion(
         ],
     }
     nombre = f"comparar-{capacidad.value}-{momento:%Y%m%dT%H%M%S}"
-    rutas = [directorio / f"{nombre}.{extension}" for extension in ("json", "csv", "md")]
+    rutas = rutas_libres(directorio, nombre)
     markdown = tabla_comparacion(capacidad, filas, hash_referencia=hash_referencia, afuera=afuera,
                                  sin_fragmentos=sin_fragmentos)
     rutas[0].write_text(json.dumps(datos, ensure_ascii=False, indent=2), encoding="utf-8")

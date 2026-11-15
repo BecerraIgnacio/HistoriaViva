@@ -150,6 +150,10 @@ def analizar(ruta: Path, contenedor: Contenedor, *, timeout_s: float = 10) -> Me
         raise VideoIlegible(f"La salida de ffprobe pasa de {_SALIDA_MAXIMA // 1024} KiB.")
     if vencido:
         raise VideoIlegible(f"ffprobe no terminó en {timeout_s:g} s.")
+    # Con `prlimit` delante, un `ffprobe` que no se puede ejecutar no es un `OSError`: `prlimit`
+    # sale con 126 o 127 (util-linux), códigos que `ffprobe` no usa.
+    if topes and proceso.returncode in (126, 127):
+        raise FfprobeNoDisponible("No se pudo ejecutar ffprobe.")
     if proceso.returncode != 0:
         raise VideoIlegible("ffprobe no pudo leer el archivo.")
     return interpretar(salida, contenedor)

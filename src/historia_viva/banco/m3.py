@@ -21,7 +21,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Self
 
-from historia_viva.banco import celda_md, percentil
+from historia_viva.banco import celda_md, percentil, rutas_libres
 from historia_viva.banco.referencia import ConsultaDeReferencia
 from historia_viva.conversacion import TurnoEnMarcha, Turno
 from historia_viva.dominio.tipos import FiltroDeBusqueda
@@ -339,7 +339,7 @@ def escribir_m3(
         "errores": resultado.errores,
         "muestras": [dict(zip(_COLUMNAS, f, strict=True)) for f in filas],
     }
-    rutas = [directorio / f"{nombre}.{extension}" for extension in ("json", "csv", "md")]
+    rutas = rutas_libres(directorio, nombre)
     rutas[0].write_text(json.dumps(datos, ensure_ascii=False, indent=2), encoding="utf-8")
     rutas[1].write_bytes(escribir_csv(_COLUMNAS, filas))
     rutas[2].write_text(tabla_m3(resultado, hash_referencia=hash_referencia), encoding="utf-8")

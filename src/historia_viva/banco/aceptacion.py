@@ -31,6 +31,7 @@ from historia_viva.banco import (
     medir_m2,
     modelo_vigente,
     porcentaje,
+    rutas_libres,
 )
 from historia_viva.banco.m3 import CONSULTAS, CargaDeFoto, ResultadoM3, medir
 from historia_viva.banco.m4 import MedicionM4, escribir_plantilla_m4, medir_m4
@@ -352,7 +353,7 @@ def escribir_m2(
         "valida": not resultado.violaciones_rf15,
         "por_pieza": por_pieza,
     }
-    rutas = [directorio / f"{nombre}.{extension}" for extension in ("json", "csv", "md")]
+    rutas = rutas_libres(directorio, nombre)
     rutas[0].write_text(json.dumps(datos, ensure_ascii=False, indent=2), encoding="utf-8")
     rutas[1].write_bytes(
         escribir_csv(_COLUMNAS, ([f[c] for c in _COLUMNAS] for f in por_pieza))
@@ -476,7 +477,7 @@ def escribir_m1(
          p.en_fragmentos, c.candidatos]
         for c in resultado.por_consulta for p in c.pares
     )
-    rutas = [directorio / f"{nombre}.{extension}" for extension in ("json", "csv", "md")]
+    rutas = rutas_libres(directorio, nombre)
     rutas[0].write_text(json.dumps(datos, ensure_ascii=False, indent=2), encoding="utf-8")
     rutas[1].write_bytes(escribir_csv(_COLUMNAS_M1, filas))
     rutas[2].write_text(

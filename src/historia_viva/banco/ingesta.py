@@ -52,7 +52,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from historia_viva.banco import celda_md, fila_md, percentil, porcentaje
+from historia_viva.banco import celda_md, fila_md, percentil, porcentaje, rutas_libres
 from historia_viva.banco.comparacion import CandidatoDeReferencia, Puntaje, _normal, puntuar
 from historia_viva.banco.referencia import ReferenciaInvalida
 from historia_viva.capa_modelos.contrato import (
@@ -488,7 +488,7 @@ def escribir_ingesta(
         ],
     }
     nombre = f"ingesta-{momento:%Y%m%dT%H%M%S}"
-    rutas = [directorio / f"{nombre}.{extension}" for extension in ("json", "csv", "md")]
+    rutas = rutas_libres(directorio, nombre)
     tabla = tabla_ingesta(corridas, hardware=hardware)
     rutas[0].write_text(json.dumps(datos, ensure_ascii=False, indent=2), encoding="utf-8")
     rutas[1].write_bytes(escribir_csv(_COLUMNAS, (

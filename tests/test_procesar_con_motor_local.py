@@ -9,6 +9,7 @@ el motor apagado la aplicación entra en el modo sin modelos del issue 11 sin ca
 from __future__ import annotations
 
 import io
+import json
 import shutil
 import sys
 from collections.abc import Iterator
@@ -148,8 +149,12 @@ def test_una_foto_real_queda_pendiente_con_descripcion_texto_visible_y_resumen(
     cliente, motor
 ):
     """El flujo completo de una fotografía con la capa real: describir en el motor, leer el
-    texto visible con Tesseract y resumir los dos juntos (user stories 7 y 8)."""
-    motor.texto = "Un cartel sobre fondo blanco."
+    texto visible con Tesseract y resumir los dos juntos (user stories 7 y 8). La fila vigente
+    pide el esquema (144): la descripción son Afirmaciones y el cuerpo de la v1, solo lo leído."""
+    motor.texto = json.dumps({
+        "tipo_imagen": "Cartel o gráfico", "afirmaciones": ["Un cartel sobre fondo blanco."],
+        "no_determinable": [],
+    })
     foto = Image.new("RGB", (1800, 400), "white")
     fuente = ImageFont.truetype("arial.ttf" if sys.platform == "win32" else "DejaVuSans.ttf", 96)
     ImageDraw.Draw(foto).text((40, 120), "FACULTAD 1975", fill="black", font=fuente)
@@ -162,10 +167,10 @@ def test_una_foto_real_queda_pendiente_con_descripcion_texto_visible_y_resumen(
 
     esperar_estado(cliente, pieza_id, "Pendiente")
     cuerpo = cliente.get(f"/api/piezas/{pieza_id}/ficha").json()["cuerpo"]
-    assert cuerpo.startswith("Un cartel sobre fondo blanco.")
-    assert ENCABEZADO_TEXTO_VISIBLE in cuerpo
+    assert cuerpo.startswith(ENCABEZADO_TEXTO_VISIBLE)
     assert "FACULTAD" in cuerpo
     describir, resumir = motor.chats()
     assert describir["model"] == MODELO_VISION
     assert resumir["model"] == MODELO_TEXTO
+    assert "Un cartel sobre fondo blanco." in resumir["messages"][1]["content"]
     assert "FACULTAD" in resumir["messages"][1]["content"]

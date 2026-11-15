@@ -103,6 +103,25 @@ def test_una_segunda_corrida_de_prueba_con_la_misma_huella_no_es_oficial(tmp_pat
     assert es_oficial(tmp_path, "prueba", "otra huella") is True
 
 
+@pytest.mark.historia(168)
+def test_dos_corridas_en_el_mismo_segundo_no_se_pisan(tmp_path):
+    for oficial in (True, False):
+        escribir_m1(
+            tmp_path, _resultado(42, 50), hash_referencia="h", configuracion_efectiva={},
+            oficial=oficial, momento=_momento(1),
+        )
+
+    corridas = sorted(tmp_path.glob("m1-prueba-*.json"))
+    # La segunda ordena después de la primera: la última corrida es la última del `glob`.
+    assert [c.name for c in corridas] == [
+        "m1-prueba-20261019T100001.json", "m1-prueba-20261019T100001_2.json",
+    ]
+    assert [json.loads(c.read_text(encoding="utf-8"))["oficial"] for c in corridas] == [
+        True, False,
+    ]
+    assert len(list(tmp_path.iterdir())) == 6
+
+
 def _momento(segundo: int) -> datetime:
     return datetime(2026, 10, 19, 10, 0, segundo, tzinfo=UTC)
 

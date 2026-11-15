@@ -25,7 +25,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from historia_viva.banco import celda_md, fila_md, mrr, percentil, porcentaje, recall_en_k
+from historia_viva.banco import (
+    celda_md, fila_md, mrr, percentil, porcentaje, recall_en_k, rutas_libres,
+)
 from historia_viva.banco.comparacion import (
     Banco,
     CandidatoDeReferencia,
@@ -461,7 +463,7 @@ def escribir_comparacion_embeber(
         "corridas_afuera": afuera,
     }
     nombre = f"comparar-embeber-{momento:%Y%m%dT%H%M%S}"
-    rutas = [directorio / f"{nombre}.{extension}" for extension in ("json", "csv", "md")]
+    rutas = rutas_libres(directorio, nombre)
     markdown = _markdown(
         filas, vigente=digest_vigente, modelo_vigente=vigente[Capacidad.EMBEBER].modelo or "",
         hash_referencia=hash_referencia, afuera=afuera,

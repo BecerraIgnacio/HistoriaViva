@@ -272,6 +272,8 @@ def test_banco_comparar_embeber_por_comando_no_toca_el_indice_y_marca_ganador_y_
         )
         monkeypatch.setattr(composicion, "capa_para",
                             lambda filas, **_: CapaModelosFalsa().para(filas))
+        # El reloj quieto: con el de verdad, un candidato que tarda 1 ms más pierde el desempate.
+        monkeypatch.setattr(BancoDeEmbeber, "_ms", lambda self, inicio: 0)
         monkeypatch.setenv("HV_BD_URL", url_app)
         monkeypatch.setenv("HV_REFERENCIA", str(referencia))
         antes = _fragmentos_del_indice(bd)

@@ -21,7 +21,7 @@ from pathlib import Path
 from statistics import fmean
 from typing import Any
 
-from historia_viva.banco import celda_md, fila_md, porcentaje
+from historia_viva.banco import celda_md, fila_md, porcentaje, rutas_libres
 from historia_viva.efemerides import TextoRedactado
 from historia_viva.exportacion import escribir_csv
 from historia_viva.planillas import leer_registros
@@ -389,7 +389,7 @@ def escribir_m4(directorio: Path, medicion: MedicionM4, *, momento: datetime) ->
         for g in medicion.grupos if g.todos
         for t, promedio in g.resultado.por_texto.items()
     )
-    rutas = [directorio / f"{nombre}.{extension}" for extension in ("json", "csv", "md")]
+    rutas = rutas_libres(directorio, nombre)
     rutas[0].write_text(json.dumps(datos, ensure_ascii=False, indent=2), encoding="utf-8")
     rutas[1].write_bytes(escribir_csv(_COLUMNAS_SALIDA, filas))
     rutas[2].write_text(tabla_m4(medicion), encoding="utf-8")
@@ -424,7 +424,7 @@ def escribir_plantilla_m4(
         "",
         "Criterios: " + "; ".join(f"`{c}` {d.lower()}" for c, d in CRITERIOS_M4.items()) + ".",
     ]
-    rutas = [directorio / f"{nombre}.csv", directorio / f"{nombre}.md"]
+    rutas = rutas_libres(directorio, nombre, ("csv", "md"))
     rutas[0].write_bytes(escribir_csv(COLUMNAS_M4, filas))
     rutas[1].write_text("\n".join(lista) + "\n", encoding="utf-8")
     return rutas
