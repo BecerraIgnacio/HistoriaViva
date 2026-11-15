@@ -21,7 +21,7 @@ import pytest
 from aplicacion import CABECERAS, app_sin_trabajador, en_marcha, entrar
 from espera import esperar_estado
 from fastapi.testclient import TestClient
-from ollama_falso import MODELO_TEXTO, MODELO_VISION, OllamaFalso
+from ollama_falso import OllamaFalso
 from PIL import Image, ImageDraw, ImageFont
 from validacion import ADMINISTRADOR_TECNICO, MARIA
 
@@ -170,7 +170,8 @@ def test_una_foto_real_queda_pendiente_con_descripcion_texto_visible_y_resumen(
     assert cuerpo.startswith(ENCABEZADO_TEXTO_VISIBLE)
     assert "FACULTAD" in cuerpo
     describir, resumir = motor.chats()
-    assert describir["model"] == MODELO_VISION
-    assert resumir["model"] == MODELO_TEXTO
+    # Los modelos de las filas vigentes: las de la semilla (0003).
+    assert describir["model"] == "qwen3-vl:2b-instruct"
+    assert resumir["model"] == "qwen2.5:3b-instruct-q4_K_M"
     assert "Un cartel sobre fondo blanco." in resumir["messages"][1]["content"]
     assert "FACULTAD" in resumir["messages"][1]["content"]
